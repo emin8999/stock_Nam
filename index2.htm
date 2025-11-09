@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="az">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Material anbarı (kq) • Maliyyə (Gəlir/Xərc, AR/AP) — AZN</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --card: #0f172a;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --border: #27324a;
+        --pill: #0b1220;
+        --accent: #38bdf8;
+        --ok: #22c55e;
+        --warn: #f59e0b;
+        --bad: #ef4444;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;
+      }
+      .app {
+        max-width: 1260px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 12px 0 16px;
+      }
+      .tab {
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #0b1220;
+        color: #cbd5e1;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tab.active {
+        background: linear-gradient(135deg, #2563eb, #06b6d4);
+        color: #fff;
+        border: none;
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+      .cols-2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .cols-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .cols-4 {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      @media (max-width: 1024px) {
+        .cols-4 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 720px) {
+        .cols-4,
+        .cols-3,
+        .cols-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px;
+      }
+      .kpi {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .kpi .val {
+        font-size: 22px;
+        font-weight: 800;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .tiny {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .row.wrap {
+        flex-wrap: wrap;
+      }
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #0b1220;
+        color: var(--text);
+      }
+      textarea {
+        min-height: 72px;
+      }
+      button {
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #0b1220;
+        color: var(--text);
+        cursor: pointer;
+      }
+      button.primary {
+        background: linear-gradient(135deg, #2563eb, #06b6d4);
+        border: none;
+        color: #fff;
+      }
+      button.ghost {
+        background: transparent;
+      }
+      .danger {
+        color: #fecaca;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px dashed var(--border);
+        font-size: 14px;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .right {
+        text-align: right;
+      }
+      .badge {
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--pill);
+        font-size: 12px;
+      }
+      .badge.ok {
+        color: var(--ok);
+        border-color: #22c55e30;
+        background: #22c55e10;
+      }
+      .badge.warn {
+        color: var(--warn);
+        border-color: #f59e0b30;
+        background: #f59e0b10;
+      }
+      .badge.bad {
+        color: var(--bad);
+        border-color: #ef444430;
+        background: #ef444410;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .pill {
+        border: 1px solid var(--border);
+        background: var(--pill);
+        border-radius: 999px;
+        padding: 6px 10px;
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 12px 0;
+      }
+      .foot {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .section-title {
+        font-size: 16px;
+        font-weight: 800;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <h1>Material anbarı (kq) + Maliyyə (AR/AP)</h1>
+      <div class="sub">
+        Valyuta: <b>AZN (₼)</b> • Ölçü vahidi: <b>kq</b> • LocalStorage demo •
+        Metod: orta çəkili
+      </div>
+
+      <!-- KPI -->
+      <div class="grid cols-4" style="margin-top: 12px">
+        <div class="card kpi">
+          <div>
+            <div class="muted">Material qalığı</div>
+            <div class="val" id="kpiOnHandKg">0</div>
+          </div>
+          <span class="badge">kq</span>
+        </div>
+        <div class="card kpi">
+          <div>
+            <div class="muted">İnventar dəyəri</div>
+            <div class="val" id="kpiInvValue">₼ 0</div>
+          </div>
+          <span class="badge">AZN</span>
+        </div>
+        <div class="card kpi">
+          <div>
+            <div class="muted">Dövür üzrə gəlir</div>
+            <div class="val" id="kpiRevenue">₼ 0</div>
+          </div>
+          <span class="badge">AZN</span>
+        </div>
+        <div class="card kpi">
+          <div>
+            <div class="muted">Dövür üzrə xalis mənfəət</div>
+            <div class="val" id="kpiNet">₼ 0</div>
+          </div>
+          <span class="badge ok" id="kpiNetBadge">OK</span>
+        </div>
+      </div>
+
+      <div class="tabs" id="tabs"></div>
+      <div id="view"></div>
+
+      <div class="foot">
+        Məsləhət: əvvəlcə material kataloqunu doldurun, sonra gələn və
+        silinən qeydləri yaradın. Ehtiyat nüsxə üçün JSON ixrac edin.
+      </div>
+    </div>
+
+    <script>
+      // ====== STATE ======
+      const KEY = "materials_finance_arap_v1";
+      const AZN = "₼";
+      const state = load();
+      function load() {
+        try {
+          return JSON.parse(localStorage.getItem(KEY) || "{}");
+        } catch (e) {
+          return {};
+        }
+      }
+      function init() {
+        state.materials ||= []; // {id, code, name, uom:'kg', min_level: number, is_active:true}
+        state.receipts ||= []; // {id, date, material_id, qty_kg, price_per_kg, total_cost, supplier, note}
+        state.issues ||= []; // {id, date, material_id, qty_kg, avg_cost_used, total_cost_used, note, job_ref}
+        state.finances ||= []; // {id, date, type:'income'|'expense', category, amount_azn, counterparty, note}
+        state.ar ||= []; // {id, counterparty, date, amount_azn, status:'open'|'partial'|'closed', payments:[{date,amount_azn,note}], note}
+        state.ap ||= []; // {id, counterparty, date, amount_azn, status, payments:[...], note}
+        state.settings ||= { lowStockGlobal: 5 };
+      }
+      init();
+      function save() {
+        localStorage.setItem(KEY, JSON.stringify(state));
+        refresh();
+      }
+
+      // ====== Helpers ======
+      const $ = (s) => document.querySelector(s);
+      const fmtN = (n, d = 2) =>
+        (n ?? 0).toLocaleString(undefined, { maximumFractionDigits: d });
+      const fmtMoney = (n) => `${AZN} ${fmtN(n, 2)}`;
+      const today = () => new Date().toISOString().slice(0, 10);
+      const uid = () =>
+        Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+      // ====== Tabs ======
+      const TABS = [
+        { id: "materials", name: "Materiallar" },
+        { id: "receipt", name: "Qəbul" },
+        { id: "issue", name: "Silmə" },
+        { id: "stock", name: "Anbar" },
+        { id: "finance", name: "Maliyyə (Gəlir/Xərc)" },
+        { id: "arap", name: "Debitor/Kreditor (AR/AP)" },
+        { id: "reports", name: "Hesabatlar" },
+        { id: "settings", name: "Parametrlər" },
+      ];
+      let currentTab = "materials";
+      function renderTabs() {
+        $("#tabs").innerHTML = TABS.map(
+          (t) =>
+            `<button class="tab ${
+              currentTab === t.id ? "active" : ""
+            }" onclick="switchTab('${t.id}')">${t.name}</button>`
+        ).join("");
+      }
+      function switchTab(id) {
+        currentTab = id;
+        renderTabs();
+        renderView();
+      }
+
+      // ====== Core calculations ======
+      function materialsMap() {
+        const m = new Map();
+        state.materials.forEach((x) => m.set(x.id, x));
+        return m;
+      }
+      function avgCostPerKg(material_id) {
+        const recs = state.receipts.filter(
+          (r) => r.material_id === material_id
+        );
+        const qty = recs.reduce((a, b) => a + Number(b.qty_kg || 0), 0);
+        const total = recs.reduce(
+          (a, b) => a + Number(b.total_cost || b.qty_kg * b.price_per_kg || 0),
+          0
+        );
+        return qty > 0 ? total / qty : 0;
+      }
+      function stockSnapshot() {
+        const m = materialsMap();
+        const rows = state.materials
+          .filter((x) => x.is_active !== false)
+          .map((mat) => {
+            const inQty = state.receipts
+              .filter((r) => r.material_id === mat.id)
+              .reduce((a, b) => a + Number(b.qty_kg || 0), 0);
+            const outQty = state.issues
+              .filter((i) => i.material_id === mat.id)
+              .reduce((a, b) => a + Number(b.qty_kg || 0), 0);
+            const onHand = inQty - outQty;
+            const avg = avgCostPerKg(mat.id);
+            const inv = onHand * avg;
+            return { mat, onHand, avg, inv };
+          });
+        return rows;
+      }
+      function totalsKPI() {
+        const ss = stockSnapshot();
+        const onHandKg = ss.reduce((a, b) => a + Number(b.onHand || 0), 0);
+        const inv = ss.reduce((a, b) => a + Number(b.inv || 0), 0);
+        return { onHandKg, inv };
+      }
+
+      // ====== Materials ======
+      function renderMaterials() {
+        const list =
+          state.materials
+            .map(
+              (x) => `
+        <tr>
+          <td>${x.code || ""}</td>
+          <td>${x.name || ""}</td>
+          <td>kq</td>
+          <td class="right">${fmtN(x.min_level ?? 0, 3)}</td>
+          <td>${
+            x.is_active === false
+              ? '<span class="badge warn">arxiv</span>'
+              : '<span class="badge ok">aktiv</span>'
+          }</td>
+          <td class="right"><button class="ghost" onclick="toggleMat('${
+            x.id
+          }')">${x.is_active === false ? "Arxivdən çıxar" : "Arxivlə"}</button></td>
+        </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Material yoxdur</td></tr>';
+
+        $("#view").innerHTML = `
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="section-title">Material bələdçisi</div>
+            <div class="row wrap">
+              <div style="flex:1 1 150px;"><label>Kod</label><input id="mCode" placeholder="MTL-001"></div>
+              <div style="flex:2 1 260px;"><label>Ad</label><input id="mName" placeholder="Poliamid qranul"></div>
+              <div style="flex:1 1 120px;"><label>Minimum qalıq (kq)</label><input id="mMin" type="number" step="0.001" value="0"></div>
+            </div>
+            <div class="row" style="justify-content:flex-end;margin-top:8px;">
+              <button class="primary" onclick="addMaterial()">Material əlavə et</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">Materiallar</div>
+            <table>
+              <thead><tr><th>Kod</th><th>Ad</th><th>Vahid</th><th class="right">Minimum qalıq</th><th>Status</th><th class="right">Əməliyyatlar</th></tr></thead>
+              <tbody>${list}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
+      function addMaterial() {
+        const code = $("#mCode").value.trim();
+        const name = $("#mName").value.trim();
+        const min = Number($("#mMin").value || 0);
+        if (!code || !name) {
+          alert("Kod və adı daxil edin");
+          return;
+        }
+        state.materials.push({
+          id: uid(),
+          code,
+          name,
+          uom: "kg",
+          min_level: min,
+          is_active: true,
+        });
+        save();
+        $("#mCode").value = "";
+        $("#mName").value = "";
+        $("#mMin").value = "0";
+      }
+      function toggleMat(id) {
+        const m = state.materials.find((x) => x.id === id);
+        if (!m) return;
+        m.is_active = m.is_active === false ? true : false;
+        save();
+      }
+
+      // ====== Receipts ======
+      function renderReceipt() {
+        const options = state.materials
+          .filter((x) => x.is_active !== false)
+          .map((x) => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
+          .join("");
+        const items =
+          state.receipts
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map((r) => {
+              const mat = state.materials.find((m) => m.id === r.material_id);
+              return `<tr>
+          <td>${r.date}</td>
+          <td>${mat ? mat.code : ""}</td>
+          <td>${mat ? mat.name : ""}</td>
+          <td class="right">${fmtN(r.qty_kg, 3)}</td>
+          <td class="right">${fmtMoney(r.price_per_kg)}</td>
+          <td class="right">${fmtMoney(r.total_cost)}</td>
+          <td>${r.supplier || ""}</td>
+          <td class="tiny">${r.note || ""}</td>
+        </tr>`;
+            })
+            .join("") ||
+          '<tr><td colspan="8" class="tiny">Qəbul yoxdur</td></tr>';
+
+        $("#view").innerHTML = `
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="section-title">Material qəbulu</div>
+            <div class="row wrap">
+              <div style="flex:2 1 260px;"><label>Material</label><select id="rcMat">${options}</select></div>
+              <div style="flex:1 1 120px;"><label>Miqdar (kq)</label><input id="rcQty" type="number" step="0.001"></div>
+              <div style="flex:1 1 140px;"><label>1 kq üçün qiymət (₼)</label><input id="rcPrice" type="number" step="0.01"></div>
+              <div style="flex:1 1 160px;"><label>Tarix</label><input id="rcDate" type="date" value="${today()}"></div>
+              <div style="flex:1 1 200px;"><label>Təchizatçı</label><input id="rcSupplier" placeholder="MMC Təchizatçı"></div>
+            </div>
+            <label>Şərh</label><textarea id="rcNote" placeholder="Partiya/qaimə"></textarea>
+            <div class="row" style="justify-content:space-between;margin-top:8px;">
+              <div class="tiny">Cəm = kq × qiymət/kq</div>
+              <button class="primary" onclick="addReceipt()">Qəbulu əlavə et</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">Son qəbullar</div>
+            <table>
+              <thead><tr><th>Tarix</th><th>Kod</th><th>Material</th><th class="right">kq</th><th class="right">Qiymət/kq</th><th class="right">Məbləğ</th><th>Təchizatçı</th><th>Şərh</th></tr></thead>
+              <tbody>${items}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
+      function addReceipt() {
+        const material_id = $("#rcMat").value;
+        const qty = Number($("#rcQty").value);
+        const price = Number($("#rcPrice").value);
+        const date = $("#rcDate").value || today();
+        const supplier = $("#rcSupplier").value.trim();
+        const note = $("#rcNote").value.trim();
+        if (!material_id || qty <= 0 || price < 0) {
+          alert("Material, miqdar (>0) və qiymət (>=0) vacibdir");
+          return;
+        }
+        state.receipts.push({
+          id: uid(),
+          date,
+          material_id,
+          qty_kg: qty,
+          price_per_kg: price,
+          total_cost: qty * price,
+          supplier,
+          note,
+        });
+        save();
+      }
+
+      // ====== Issues ======
+      function renderIssue() {
+        const options = state.materials
+          .filter((x) => x.is_active !== false)
+          .map((x) => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
+          .join("");
+        const items =
+          state.issues
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map((i) => {
+              const mat = state.materials.find((m) => m.id === i.material_id);
+              return `<tr>
+          <td>${i.date}</td>
+          <td>${mat ? mat.code : ""}</td>
+          <td>${mat ? mat.name : ""}</td>
+          <td class="right">${fmtN(i.qty_kg, 3)}</td>
+          <td class="right">${fmtMoney(i.avg_cost_used)}</td>
+          <td class="right">${fmtMoney(i.total_cost_used)}</td>
+          <td>${i.job_ref || ""}</td>
+          <td class="tiny">${i.note || ""}</td>
+        </tr>`;
+            })
+            .join("") ||
+          '<tr><td colspan="8" class="tiny">Silmə yoxdur</td></tr>';
+
+        $("#view").innerHTML = `
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="section-title">Списание материалов (использование)</div>
+            <div class="row wrap">
+              <div style="flex:2 1 260px;"><label>Материал</label><select id="isMat">${options}</select></div>
+              <div style="flex:1 1 120px;"><label>Кол-во (кг)</label><input id="isQty" type="number" step="0.001"></div>
+              <div style="flex:1 1 160px;"><label>Дата</label><input id="isDate" type="date" value="${today()}"></div>
+              <div style="flex:1 1 200px;"><label>Задача/Заказ</label><input id="isJob" placeholder="#JOB-001"></div>
+            </div>
+            <label>Комментарий</label><textarea id="isNote" placeholder="Цех/партию/оператора"></textarea>
+            <div class="row" style="justify-content:space-between;margin-top:8px;">
+              <div class="tiny">Себестоимость списания = текущая средняя цена × кг</div>
+              <button class="primary" onclick="addIssue()">Добавить списание</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">Последние списания</div>
+            <table>
+              <thead><tr><th>Дата</th><th>Код</th><th>Материал</th><th class="right">Кг</th><th class="right">Средн. цена</th><th class="right">Сумма</th><th>Заказ</th><th>Комментарий</th></tr></thead>
+              <tbody>${items}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
+      function addIssue() {
+        const material_id = $("#isMat").value;
+        const qty = Number($("#isQty").value);
+        const date = $("#isDate").value || today();
+        const job_ref = $("#isJob").value.trim();
+        const note = $("#isNote").value.trim();
+        if (!material_id || qty <= 0) {
+          alert("Материал и количество (>0) обязательны");
+          return;
+        }
+        // check stock
+        const ss = stockSnapshot().find((r) => r.mat.id === material_id);
+        const onHand = ss ? ss.onHand : 0;
+        if (onHand < qty) {
+          if (!confirm("Недостаточно остатка. Списать в минус?")) return;
+        }
+        const avg = avgCostPerKg(material_id);
+        state.issues.push({
+          id: uid(),
+          date,
+          material_id,
+          qty_kg: qty,
+          avg_cost_used: avg,
+          total_cost_used: avg * qty,
+          job_ref: job_ref || undefined,
+          note,
+        });
+        save();
+      }
+
+      // ====== Stock ======
+      function renderStock() {
+        const rows = stockSnapshot();
+        const body =
+          rows
+            .map((r) => {
+              const health = r.onHand <= (r.mat.min_level || 0) ? "warn" : "ok";
+              return `<tr>
+          <td>${r.mat.code}</td>
+          <td>${r.mat.name}</td>
+          <td class="right">${fmtN(r.onHand, 3)}</td>
+          <td class="right">${fmtMoney(r.avg)}</td>
+          <td class="right">${fmtMoney(r.inv)}</td>
+          <td><span class="badge ${health}">${
+                health === "ok" ? "OK" : "LOW"
+              }</span></td>
+        </tr>`;
+            })
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Нет данных по складу</td></tr>';
+
+        $("#view").innerHTML = `
+        <div class="card">
+          <div class="section-title">Остатки материалов (кг)</div>
+          <table>
+            <thead><tr><th>Код</th><th>Материал</th><th class="right">В наличии (кг)</th><th class="right">Средн. цена (₼/кг)</th><th class="right">Инв. стоимость</th><th>Статус</th></tr></thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>`;
+      }
+
+      // ====== Finance Income/Expense ======
+      function renderFinance() {
+        const list =
+          state.finances
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map(
+              (f) =>
+                `<tr><td>${f.date}</td><td>${
+                  f.type === "income" ? "Доход" : "Расход"
+                }</td><td>${f.category || ""}</td><td>${
+                  f.counterparty || ""
+                }</td><td class="right">${fmtMoney(
+                  f.amount_azn
+                )}</td><td class="tiny">${f.note || ""}</td></tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Нет записей</td></tr>';
+        $("#view").innerHTML = `
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="section-title">Доходы / Расходы</div>
+            <div class="row wrap">
+              <div style="flex:1 1 140px;"><label>Тип</label><select id="fnType"><option value="income">Доход</option><option value="expense">Расход</option></select></div>
+              <div style="flex:2 1 220px;"><label>Категория</label><input id="fnCat" placeholder="Аренда, логистика, продажа..."></div>
+              <div style="flex:1 1 150px;"><label>Сумма (₼)</label><input id="fnAmt" type="number" step="0.01"></div>
+              <div style="flex:1 1 160px;"><label>Дата</label><input id="fnDate" type="date" value="${today()}"></div>
+              <div style="flex:2 1 220px;"><label>Контрагент</label><input id="fnCp" placeholder="ООО Клиент/Поставщик"></div>
+            </div>
+            <label>Комментарий</label><textarea id="fnNote"></textarea>
+            <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addFinance()">Добавить</button></div>
+          </div>
+          <div class="card">
+            <div class="section-title">Записи</div>
+            <table>
+              <thead><tr><th>Дата</th><th>Тип</th><th>Категория</th><th>Контрагент</th><th class="right">Сумма</th><th>Комментарий</th></tr></thead>
+              <tbody>${list}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
+      function addFinance() {
+        const type = $("#fnType").value;
+        const category = $("#fnCat").value.trim();
+        const amount = Number($("#fnAmt").value);
+        const date = $("#fnDate").value || today();
+        const counterparty = $("#fnCp").value.trim();
+        const note = $("#fnNote").value.trim();
+        if (!category || amount < 0) {
+          alert("Категория обязательна, сумма ≥ 0");
+          return;
+        }
+        state.finances.push({
+          id: uid(),
+          date,
+          type,
+          category,
+          amount_azn: amount,
+          counterparty,
+          note,
+        });
+        save();
+      }
+
+      // ====== AR/AP ======
+      function arRemaining(entry) {
+        const paid = (entry.payments || []).reduce(
+          (a, b) => a + Number(b.amount_azn || 0),
+          0
+        );
+        return (entry.amount_azn || 0) - paid;
+      }
+      function apRemaining(entry) {
+        return arRemaining(entry);
+      }
+
+      function renderARAP() {
+        const arRows =
+          state.ar
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map(
+              (e) => `<tr>
+          <td>${e.date}</td><td>${
+                e.counterparty
+              }</td><td class="right">${fmtMoney(e.amount_azn)}</td>
+          <td class="right">${fmtMoney(arRemaining(e))}</td>
+          <td>${e.status}</td>
+          <td class="right"><button class="ghost" onclick="addARPayPrompt('${
+            e.id
+          }')">Оплата</button></td>
+        </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Нет должников</td></tr>';
+
+        const apRows =
+          state.ap
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map(
+              (e) => `<tr>
+          <td>${e.date}</td><td>${
+                e.counterparty
+              }</td><td class="right">${fmtMoney(e.amount_azn)}</td>
+          <td class="right">${fmtMoney(apRemaining(e))}</td>
+          <td>${e.status}</td>
+          <td class="right"><button class="ghost" onclick="addAPPayPrompt('${
+            e.id
+          }')">Оплата</button></td>
+        </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Нет кредиторов</td></tr>';
+
+        $("#view").innerHTML = `
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="section-title">Нам должны (AR)</div>
+            <div class="row wrap">
+              <div style="flex:2 1 220px;"><label>Контрагент</label><input id="arCp"></div>
+              <div style="flex:1 1 160px;"><label>Дата</label><input id="arDate" type="date" value="${today()}"></div>
+              <div style="flex:1 1 150px;"><label>Сумма (₼)</label><input id="arAmt" type="number" step="0.01"></div>
+              <div style="flex:1 1 160px;"><label>Статус</label><select id="arStatus"><option>open</option><option>partial</option><option>closed</option></select></div>
+            </div>
+            <label>Комментарий</label><textarea id="arNote"></textarea>
+            <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addAR()">Добавить AR</button></div>
+            <div class="divider"></div>
+            <table>
+              <thead><tr><th>Дата</th><th>Контрагент</th><th class="right">Сумма</th><th class="right">Остаток</th><th>Статус</th><th class="right">Действия</th></tr></thead>
+              <tbody>${arRows}</tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="section-title">Мы должны (AP)</div>
+            <div class="row wrap">
+              <div style="flex:2 1 220px;"><label>Контрагент</label><input id="apCp"></div>
+              <div style="flex:1 1 160px;"><label>Дата</label><input id="apDate" type="date" value="${today()}"></div>
+              <div style="flex:1 1 150px;"><label>Сумма (₼)</label><input id="apAmt" type="number" step="0.01"></div>
+              <div style="flex:1 1 160px;"><label>Статус</label><select id="apStatus"><option>open</option><option>partial</option><option>closed</option></select></div>
+            </div>
+            <label>Комментарий</label><textarea id="apNote"></textarea>
+            <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addAP()">Добавить AP</button></div>
+            <div class="divider"></div>
+            <table>
+              <thead><tr><th>Дата</th><th>Контрагент</th><th class="right">Сумма</th><th class="right">Остаток</th><th>Статус</th><th class="right">Действия</th></tr></thead>
+              <tbody>${apRows}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
+      function addAR() {
+        const counterparty = $("#arCp").value.trim();
+        const date = $("#arDate").value || today();
+        const amount = Number($("#arAmt").value);
+        const status = $("#arStatus").value;
+        const note = $("#arNote").value.trim();
+        if (!counterparty || amount <= 0) {
+          alert("Контрагент и сумма (>0) обязательны");
+          return;
+        }
+        state.ar.push({
+          id: uid(),
+          counterparty,
+          date,
+          amount_azn: amount,
+          status,
+          payments: [],
+          note,
+        });
+        save();
+      }
+      function addAP() {
+        const counterparty = $("#apCp").value.trim();
+        const date = $("#apDate").value || today();
+        const amount = Number($("#apAmt").value);
+        const status = $("#apStatus").value;
+        const note = $("#apNote").value.trim();
+        if (!counterparty || amount <= 0) {
+          alert("Контрагент и сумма (>0) обязательны");
+          return;
+        }
+        state.ap.push({
+          id: uid(),
+          counterparty,
+          date,
+          amount_azn: amount,
+          status,
+          payments: [],
+          note,
+        });
+        save();
+      }
+      function addARPayPrompt(id) {
+        const e = state.ar.find((x) => x.id === id);
+        if (!e) return;
+        const amt = prompt("Сумма оплаты (₼)");
+        if (amt === null) return;
+        const a = Number(amt);
+        if (!(a > 0)) return alert("Неверная сумма");
+        (e.payments || (e.payments = [])).push({
+          date: today(),
+          amount_azn: a,
+        });
+        e.status = arRemaining(e) <= 0 ? "closed" : "partial";
+        save();
+      }
+      function addAPPayPrompt(id) {
+        const e = state.ap.find((x) => x.id === id);
+        if (!e) return;
+        const amt = prompt("Сумма оплаты (₼)");
+        if (amt === null) return;
+        const a = Number(amt);
+        if (!(a > 0)) return alert("Неверная сумма");
+        (e.payments || (e.payments = [])).push({
+          date: today(),
+          amount_azn: a,
+        });
+        e.status = apRemaining(e) <= 0 ? "closed" : "partial";
+        save();
+      }
+
+      // ====== Reports ======
+      function computePL(from, to) {
+        const inRange = (d) => {
+          const dt = new Date(d);
+          if (from && dt < new Date(from)) return false;
+          if (to && dt > new Date(to)) return false;
+          return true;
+        };
+        const revenue = state.finances
+          .filter((x) => x.type === "income" && inRange(x.date))
+          .reduce((a, b) => a + Number(b.amount_azn || 0), 0);
+        const expenses = state.finances
+          .filter((x) => x.type === "expense" && inRange(x.date))
+          .reduce((a, b) => a + Number(b.amount_azn || 0), 0);
+        const cogs = state.issues
+          .filter((x) => inRange(x.date))
+          .reduce((a, b) => a + Number(b.total_cost_used || 0), 0);
+        const gross = revenue - cogs;
+        const net = gross - expenses; // (+ прочие доходы, если отдельно)
+        return { revenue, cogs, gross, expenses, net };
+      }
+      function renderReports() {
+        const from = today().slice(0, 7) + "-01";
+        const to = today();
+        $("#view").innerHTML = `
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="section-title">P&L по периоду</div>
+            <div class="row wrap">
+              <div style="flex:1 1 160px;"><label>С даты</label><input id="rpFrom" type="date" value="${from}"></div>
+              <div style="flex:1 1 160px;"><label>По дату</label><input id="rpTo" type="date" value="${to}"></div>
+              <div style="align-self:flex-end;"><button class="primary" onclick="renderPLBox()">Показать</button></div>
+            </div>
+            <div id="plBox" style="margin-top:8px;"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">Движение материалов (кг/₼)</div>
+            <div id="mvBox"></div>
+          </div>
+        </div>`;
+        renderPLBox();
+        renderMovement();
+      }
+      function renderPLBox() {
+        const from = $("#rpFrom").value;
+        const to = $("#rpTo").value;
+        const pl = computePL(from, to);
+        $("#plBox").innerHTML = `
+        <table>
+          <tbody>
+            <tr><td>Выручка</td><td class="right">${fmtMoney(
+              pl.revenue
+            )}</td></tr>
+            <tr><td>Себестоимость списанного (COGS)</td><td class="right">${fmtMoney(
+              pl.cogs
+            )}</td></tr>
+            <tr><th>Валовая прибыль</th><th class="right">${fmtMoney(
+              pl.gross
+            )}</th></tr>
+            <tr><td>Прочие расходы</td><td class="right">${fmtMoney(
+              pl.expenses
+            )}</td></tr>
+            <tr><th>Чистая прибыль</th><th class="right">${fmtMoney(
+              pl.net
+            )}</th></tr>
+          </tbody>
+        </table>`;
+        // обновим KPI периода
+        $("#kpiRevenue").textContent = fmtMoney(pl.revenue);
+        $("#kpiNet").textContent = fmtMoney(pl.net);
+        const badge = $("#kpiNetBadge");
+        badge.textContent = pl.net >= 0 ? "OK" : "NEG";
+        badge.className = `badge ${pl.net >= 0 ? "ok" : "bad"}`;
+      }
+      function renderMovement() {
+        // агрегируем по материалам за весь период (для MVP)
+        const rows = stockSnapshot().map((r) => {
+          const inQty = state.receipts
+            .filter((x) => x.material_id === r.mat.id)
+            .reduce((a, b) => a + Number(b.qty_kg || 0), 0);
+          const inSum = state.receipts
+            .filter((x) => x.material_id === r.mat.id)
+            .reduce((a, b) => a + Number(b.total_cost || 0), 0);
+          const outQty = state.issues
+            .filter((x) => x.material_id === r.mat.id)
+            .reduce((a, b) => a + Number(b.qty_kg || 0), 0);
+          const outSum = state.issues
+            .filter((x) => x.material_id === r.mat.id)
+            .reduce((a, b) => a + Number(b.total_cost_used || 0), 0);
+          return { mat: r.mat, inQty, inSum, outQty, outSum };
+        });
+        const body =
+          rows
+            .map(
+              (x) =>
+                `<tr><td>${x.mat.code}</td><td>${
+                  x.mat.name
+                }</td><td class="right">${fmtN(
+                  x.inQty,
+                  3
+                )}</td><td class="right">${fmtMoney(
+                  x.inSum
+                )}</td><td class="right">${fmtN(
+                  x.outQty,
+                  3
+                )}</td><td class="right">${fmtMoney(x.outSum)}</td></tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Нет данных</td></tr>';
+        $(
+          "#mvBox"
+        ).innerHTML = `<table><thead><tr><th>Код</th><th>Материал</th><th class="right">Приход (кг)</th><th class="right">Приход (₼)</th><th class="right">Списание (кг)</th><th class="right">Списание (₼)</th></tr></thead><tbody>${body}</tbody></table>`;
+      }
+
+      // ====== Settings / Export ======
+      function renderSettings() {
+        $("#view").innerHTML = `
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="section-title">Порог низкого остатка (глобально)</div>
+            <div class="row wrap">
+              <div style="flex:1 1 220px;"><label>кг</label><input id="lowGlobal" type="number" step="0.001" value="${
+                state.settings.lowStockGlobal || 0
+              }"></div>
+              <div style="align-self:flex-end;"><button onclick="saveLowGlobal()">Сохранить</button></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">Резервное копирование</div>
+            <div class="toolbar">
+              <button onclick="exportJSON()">Экспорт JSON</button>
+              <label class="pill">Импорт JSON <input id="impFile" type="file" accept="application/json" style="display:none" onchange="importJSON(event)"></label>
+              <button class="ghost danger" onclick="if(confirm('Очистить все данные?')) resetAll()">Очистить всё</button>
+            </div>
+          </div>
+        </div>`;
+      }
+      function saveLowGlobal() {
+        state.settings.lowStockGlobal = Number($("#lowGlobal").value || 0);
+        save();
+        alert("Сохранено");
+      }
+      function exportJSON() {
+        const blob = new Blob([JSON.stringify(state, null, 2)], {
+          type: "application/json",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `materials_finance_${Date.now()}.json`;
+        a.click();
+      }
+      function importJSON(e) {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          try {
+            const d = JSON.parse(r.result);
+            Object.assign(state, d);
+            save();
+            alert("Импортировано");
+          } catch (err) {
+            alert("Ошибка импорта: " + err.message);
+          }
+        };
+        r.readAsText(f);
+      }
+      function resetAll() {
+        localStorage.removeItem(KEY);
+        Object.keys(state).forEach((k) => delete state[k]);
+        init();
+        save();
+      }
+
+      // ====== Master view / KPI ======
+      function renderView() {
+        if (currentTab === "materials") renderMaterials();
+        else if (currentTab === "receipt") renderReceipt();
+        else if (currentTab === "issue") renderIssue();
+        else if (currentTab === "stock") renderStock();
+        else if (currentTab === "finance") renderFinance();
+        else if (currentTab === "arap") renderARAP();
+        else if (currentTab === "reports") renderReports();
+        else if (currentTab === "settings") renderSettings();
+      }
+      function refresh() {
+        renderTabs();
+        renderView();
+        const { onHandKg, inv } = totalsKPI();
+        document.getElementById("kpiOnHandKg").textContent = fmtN(onHandKg, 3);
+        document.getElementById("kpiInvValue").textContent = fmtMoney(inv);
+      }
+
+      // init
+      refresh();
+    </script>
+  </body>
+</html>
