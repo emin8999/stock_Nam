@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface FinanceRepository extends JpaRepository<Finance, Long> {
-    List<Finance> findByDateBetweenOrderByDateDesc(LocalDate start, LocalDate end);
-    List<Finance> findAllByOrderByDateDesc();
+public interface FinanceRepository extends JpaRepository<Finance, String> {
+    List<Finance> findByDateBetween(LocalDate from, LocalDate to);
+    List<Finance> findByType(Finance.FinanceType type);
 }

@@ -8,6 +8,6 @@ import com.backend.entity.AccountsReceivable;
 import java.util.List;
 
 @Repository
-public interface AccountsReceivableRepository extends JpaRepository<AccountsReceivable, Long> {
-    List<AccountsReceivable> findAllByOrderByDateDesc();
+public interface AccountsReceivableRepository extends JpaRepository<AccountsReceivable, String> {
+    List<AccountsReceivable> findByStatus(AccountsReceivable.Status status);
 }

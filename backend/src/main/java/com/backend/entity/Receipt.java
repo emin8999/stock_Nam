@@ -5,27 +5,38 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "receipts")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Receipt {
+    
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
     
     @Column(nullable = false)
     private LocalDate date;
     
     @Column(name = "material_id", nullable = false)
-    private Long materialId;
+    private String materialId;
     
-    @Column(name = "qty_kg", nullable = false, precision = 12, scale = 3)
+    @Column(name = "qty_kg", nullable = false)
     private BigDecimal qtyKg;
     
-    @Column(name = "price_per_kg", nullable = false, precision = 12, scale = 2)
+    @Column(name = "price_per_kg", nullable = false)
     private BigDecimal pricePerKg;
     
-    @Column(name = "total_cost", nullable = false, precision = 15, scale = 2)
+    @Column(name = "total_cost", nullable = false)
     private BigDecimal totalCost;
     
     private String supplier;

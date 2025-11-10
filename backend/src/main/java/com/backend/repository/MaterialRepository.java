@@ -8,7 +8,7 @@ import com.backend.entity.Material;
 import java.util.List;
 
 @Repository
-public interface MaterialRepository extends JpaRepository<Material, Long> {
+public interface MaterialRepository extends JpaRepository<Material, String> {
     List<Material> findByIsActiveTrue();
     boolean existsByCode(String code);
 }

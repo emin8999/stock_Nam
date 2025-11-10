@@ -8,6 +8,6 @@ import com.backend.entity.AccountsPayable;
 import java.util.List;
 
 @Repository
-public interface AccountsPayableRepository extends JpaRepository<AccountsPayable, Long> {
-    List<AccountsPayable> findAllByOrderByDateDesc();
+public interface AccountsPayableRepository extends JpaRepository<AccountsPayable, String> {
+    List<AccountsPayable> findByStatus(AccountsPayable.Status status);
 }

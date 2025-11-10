@@ -1,20 +1,15 @@
 package com.backend.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Getter
-@Setter
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
-@Builder
-public class StockDTO {
-    
+@AllArgsConstructor
+public class StockSnapshotDTO {
     private String materialId;
     private String code;
     private String name;
@@ -22,5 +17,5 @@ public class StockDTO {
     private BigDecimal avgCostPerKg;
     private BigDecimal inventoryValue;
     private BigDecimal minLevel;
-    private String status;
+    private String status; 
 }

@@ -16,7 +16,7 @@ import lombok.Setter;
 public class ProfitLossDTO {
     private BigDecimal revenue;
     private BigDecimal cogs;
-    private BigDecimal gross;
+    private BigDecimal grossProfit;
     private BigDecimal expenses;
-    private BigDecimal net;
+    private BigDecimal netProfit;
 }

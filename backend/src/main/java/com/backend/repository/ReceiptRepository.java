@@ -5,10 +5,11 @@ import org.springframework.stereotype.Repository;
 
 import com.backend.entity.Receipt;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface ReceiptRepository extends JpaRepository<Receipt, Long> {
-    List<Receipt> findByMaterialId(Long materialId);
-    List<Receipt> findAllByOrderByDateDesc();
+public interface ReceiptRepository extends JpaRepository<Receipt, String> {
+    List<Receipt> findByMaterialId(String materialId);
+    List<Receipt> findByDateBetween(LocalDate from, LocalDate to);
 }
