@@ -15,6 +15,7 @@ import com.backend.dto.StockSnapshotDTO;
 import com.backend.entity.Issue;
 import com.backend.entity.Material;
 import com.backend.entity.Receipt;
+import com.backend.entity.Finance;
 
 import lombok.RequiredArgsConstructor;
 
@@ -104,13 +105,13 @@ public class StockService {
         var issues = issueService.findByDateRange(from, to);
         
         BigDecimal revenue = finances.stream()
-            .filter(f -> f.getType() == az.inventory.entity.Finance.FinanceType.income)
-            .map(az.inventory.entity.Finance::getAmountAzn)
+            .filter(f -> f.getType() == com.backend.entity.Finance.FinanceType.income)
+            .map(com.backend.entity.Finance::getAmountAzn)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         BigDecimal expenses = finances.stream()
-            .filter(f -> f.getType() == az.inventory.entity.Finance.FinanceType.expense)
-            .map(az.inventory.entity.Finance::getAmountAzn)
+            .filter(f -> f.getType() ==com.backend.entity.Finance.FinanceType.expense)
+            .map(com.backend.entity.Finance::getAmountAzn)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         BigDecimal cogs = issues.stream()

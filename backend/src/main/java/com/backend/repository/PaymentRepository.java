@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    List<Payment> findByReferenceIdAndReferenceType(Long referenceId, Payment.ReferenceType type);
+   // List<Payment> findByReferenceIdAndReferenceType(Long referenceId, Payment.ReferenceType type);
 }
