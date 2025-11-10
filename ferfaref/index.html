@@ -237,8 +237,7 @@
     <div class="app">
       <h1>Material anbarı (kq) + Maliyyə (AR/AP)</h1>
       <div class="sub">
-        Valyuta: <b>AZN (₼)</b> • Ölçü vahidi: <b>kq</b> • Bütün əməliyyatlar API ilə həyata keçirilir • Server:
-        <b id="baseUrl">http://116.203.51.133</b>
+        Valyuta: <b>AZN (₼)</b> • Ölçü vahidi: <b>kq</b> • Backend API: <b id="baseUrl">http://116.203.51.133:8085/stock</b>
       </div>
 
       <!-- KPI -->
@@ -277,7 +276,7 @@
       <div id="view"></div>
 
       <div class="foot">
-        Məsləhət: əvvəlcə material kataloqunu əlavə edin, sonra gələn və silinən qeydləri yaradın. Hər sorğunun cavabına server baxın.
+        Məsləhət: əvvəlcə material kataloqunu əlavə edin, sonra gələn və silinən qeydləri yaradın.
       </div>
     </div>
 
@@ -285,9 +284,9 @@
       // ====== KONFİGURASİYA ======
       const BASE = "http://116.203.51.133:8085/stock";
       const API_HEADERS = {
-        "Content-Type": "application/json"
-        // Əgər token varsa buraya əlavə et, məsələn:
-        // "Authorization": "Bearer YOUR_TOKEN_HERE"
+        "Content-Type": "application/json",
+        // Token varsa buraya əlavə edin:
+        // "Authorization": "Bearer YOUR_TOKEN"
       };
 
       // helperlər
@@ -296,7 +295,6 @@
         (n ?? 0).toLocaleString(undefined, { maximumFractionDigits: d });
       const fmtMoney = n => `₼ ${fmtN(n, 2)}`;
       const today = () => new Date().toISOString().slice(0, 10);
-      const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
       // TABS
       const TABS = [
@@ -307,11 +305,10 @@
         { id: "finance", name: "Maliyyə (Gəlir/Xərc)" },
         { id: "arap", name: "Debitor/Kreditor (AR/AP)" },
         { id: "reports", name: "Hesabatlar" },
-        { id: "settings", name: "Parametrlər" },
       ];
       let currentTab = "materials";
 
-      // APP STATE (server əsaslı)
+      // APP STATE
       const APP = {
         materials: [],
         receipts: [],
@@ -330,19 +327,19 @@
             `<button class="tab ${currentTab === t.id ? "active" : ""}" onclick="switchTab('${t.id}')">${t.name}</button>`
         ).join("");
       }
+      
       function switchTab(id) {
         currentTab = id;
         renderTabs();
         renderView();
         // avtomatik fetch
         if (id === "materials") fetchMaterials();
-        if (id === "receipt") fetchReceipts();
-        if (id === "issue") fetchIssues();
-        if (id === "stock") fetchStock();
-        if (id === "finance") fetchFinances();
-        if (id === "arap") fetchARAP();
-        if (id === "reports") fetchPL();
-        if (id === "settings") fetchSettings();
+        else if (id === "receipt") { fetchMaterials(); fetchReceipts(); }
+        else if (id === "issue") { fetchMaterials(); fetchIssues(); }
+        else if (id === "stock") fetchStock();
+        else if (id === "finance") fetchFinances();
+        else if (id === "arap") fetchARAP();
+        else if (id === "reports") { fetchMaterials(); fetchReceipts(); fetchIssues(); fetchPL(); }
       }
 
       // ====== API helpers ======
@@ -351,15 +348,16 @@
           const res = await fetch(BASE + path, { method: "GET", headers: API_HEADERS });
           if (!res.ok) {
             const text = await res.text().catch(()=>"");
-            throw new Error(`HTTP ${res.status} ${text}`);
+            throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return await res.json();
         } catch (e) {
           console.error("GET", path, e);
-          alert(`Server xətası GET ${path} — Konsolu yoxla (F12).`);
+          alert(`Server xətası GET ${path}\n${e.message}`);
           throw e;
         }
       }
+      
       async function apiPOST(path, body) {
         try {
           const res = await fetch(BASE + path, {
@@ -369,15 +367,16 @@
           });
           if (!res.ok) {
             const text = await res.text().catch(()=>"");
-            throw new Error(`HTTP ${res.status} ${text}`);
+            throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return await res.json();
         } catch (e) {
           console.error("POST", path, e);
-          alert(`Server xətası POST ${path} — Konsolu yoxla (F12).`);
+          alert(`Server xətası POST ${path}\n${e.message}`);
           throw e;
         }
       }
+      
       async function apiPUT(path, body) {
         try {
           const res = await fetch(BASE + path, {
@@ -387,108 +386,119 @@
           });
           if (!res.ok) {
             const text = await res.text().catch(()=>"");
-            throw new Error(`HTTP ${res.status} ${text}`);
+            throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return await res.json();
         } catch (e) {
           console.error("PUT", path, e);
-          alert(`Server xətası PUT ${path} — Konsolu yoxla (F12).`);
+          alert(`Server xətası PUT ${path}\n${e.message}`);
+          throw e;
+        }
+      }
+
+      async function apiPATCH(path) {
+        try {
+          const res = await fetch(BASE + path, {
+            method: "PATCH",
+            headers: API_HEADERS,
+          });
+          if (!res.ok) {
+            const text = await res.text().catch(()=>"");
+            throw new Error(`HTTP ${res.status}: ${text}`);
+          }
+          return res.status === 204 ? {} : await res.json();
+        } catch (e) {
+          console.error("PATCH", path, e);
+          alert(`Server xətası PATCH ${path}\n${e.message}`);
           throw e;
         }
       }
 
       // ====== FETCH data from server ======
       async function fetchMaterials() {
-        const data = await apiGET("/api/materials");
-        // gözlənilən cavab ya array, ya {data: [...]}
-        APP.materials = Array.isArray(data) ? data : (data.data || []);
-        renderMaterials();
+        try {
+          APP.materials = await apiGET("/api/materials");
+          if (currentTab === "materials") renderMaterials();
+        } catch (e) {}
       }
+      
       async function fetchReceipts() {
-        const data = await apiGET("/api/receipts");
-        APP.receipts = Array.isArray(data) ? data : (data.data || []);
-        renderReceipt();
+        try {
+          APP.receipts = await apiGET("/api/receipts");
+          if (currentTab === "receipt") renderReceipt();
+        } catch (e) {}
       }
+      
       async function fetchIssues() {
-        const data = await apiGET("/api/issues");
-        APP.issues = Array.isArray(data) ? data : (data.data || []);
-        renderIssue();
+        try {
+          APP.issues = await apiGET("/api/issues");
+          if (currentTab === "issue") renderIssue();
+        } catch (e) {}
       }
+      
       async function fetchStock() {
-        const data = await apiGET("/api/stock");
-        APP.stock = Array.isArray(data) ? data : (data.data || []);
-        // KPI endpoint (əgər varsa)
         try {
-          const k = await apiGET("/api/kpi");
-          APP.kpi = k;
-        } catch (e) {
-          APP.kpi = null;
-        }
-        renderStock();
-        updateKPIBox();
-      }
-      async function fetchFinances() {
-        const data = await apiGET("/api/finances");
-        APP.finances = Array.isArray(data) ? data : (data.data || []);
-        renderFinance();
-      }
-      async function fetchARAP() {
-        const ar = await apiGET("/api/ar");
-        APP.ar = Array.isArray(ar) ? ar : (ar.data || []);
-        const ap = await apiGET("/api/ap");
-        APP.ap = Array.isArray(ap) ? ap : (ap.data || []);
-        renderARAP();
-      }
-      async function fetchPL() {
-        // default period: bu ay
-        const from = today().slice(0, 7) + "-01";
-        const to = today();
-        const data = await apiGET(`/api/reports/pl?from=${from}&to=${to}`);
-        APP.pl = data || {};
-        renderReports();
-        // update KPI from PL if mövcudsa
-        if (data && typeof data.net !== "undefined") {
-          APP.kpi = { net: data.net, revenue: data.revenue, inv_value: APP.kpi ? APP.kpi.inv_value : 0 };
+          APP.stock = await apiGET("/api/stock/snapshot");
+          const from = today().slice(0, 7) + "-01";
+          const to = today();
+          APP.kpi = await apiGET(`/api/stock/kpi?from=${from}&to=${to}`);
+          renderStock();
           updateKPIBox();
-        }
+        } catch (e) {}
       }
-      async function fetchSettings() {
+      
+      async function fetchFinances() {
         try {
-          const s = await apiGET("/api/settings");
-          APP.settings = s || {};
-          renderSettings();
-        } catch (e) {
-          APP.settings = {};
-          renderSettings();
-        }
+          APP.finances = await apiGET("/api/finances");
+          renderFinance();
+        } catch (e) {}
+      }
+      
+      async function fetchARAP() {
+        try {
+          APP.ar = await apiGET("/api/ar");
+          APP.ap = await apiGET("/api/ap");
+          renderARAP();
+        } catch (e) {}
+      }
+      
+      async function fetchPL() {
+        try {
+          const from = $("#rpFrom") ? $("#rpFrom").value : today().slice(0, 7) + "-01";
+          const to = $("#rpTo") ? $("#rpTo").value : today();
+          APP.pl = await apiGET(`/api/stock/profit-loss?from=${from}&to=${to}`);
+          APP.kpi = await apiGET(`/api/stock/kpi?from=${from}&to=${to}`);
+          APP.movements = await apiGET("/api/stock/movements");
+          renderReports();
+          updateKPIBox();
+        } catch (e) {}
       }
 
       // ====== RENDER / UI funksiyaları ======
       function updateKPIBox() {
-        // fallback hesablamalar əgər serverdən kpi gəlmirsə client-based
         let onHandKg = 0, inv = 0;
+        
         if (Array.isArray(APP.stock) && APP.stock.length) {
-          APP.stock.forEach(s => { onHandKg += Number(s.onHand || s.qty || 0); inv += Number(s.inv || s.inv_value || 0); });
-        } else {
-          // alternativ: receipts/issues əsasında
-          APP.materials.forEach(m => {
-            const inQty = APP.receipts.filter(r => r.material_id === m.id).reduce((a,b)=>a+Number(b.qty_kg||0),0);
-            const outQty = APP.issues.filter(i => i.material_id === m.id).reduce((a,b)=>a+Number(b.qty_kg||0),0);
-            const on = inQty - outQty;
-            onHandKg += on;
-            const avg = (APP.receipts.filter(r => r.material_id === m.id).reduce((a,b)=>a + Number(b.total_cost||0),0) /
-                         Math.max(1, APP.receipts.filter(r => r.material_id === m.id).reduce((a,b)=>a + Number(b.qty_kg||0),0))) || 0;
-            inv += on * avg;
+          APP.stock.forEach(s => { 
+            onHandKg += Number(s.onHandKg || 0); 
+            inv += Number(s.inventoryValue || 0); 
           });
         }
+        
         $("#kpiOnHandKg").textContent = fmtN(onHandKg, 3);
         $("#kpiInvValue").textContent = fmtMoney(inv);
+        
         if (APP.kpi) {
           $("#kpiRevenue").textContent = fmtMoney(APP.kpi.revenue || 0);
-          $("#kpiNet").textContent = fmtMoney(APP.kpi.net || 0);
+          $("#kpiNet").textContent = fmtMoney(APP.kpi.netProfit || 0);
           const badge = $("#kpiNetBadge");
-          if ((APP.kpi.net || 0) >= 0) { badge.textContent = "OK"; badge.className = "badge ok"; }
-          else { badge.textContent = "NEG"; badge.className = "badge bad"; }
+          if ((APP.kpi.netProfit || 0) >= 0) { 
+            badge.textContent = "OK"; 
+            badge.className = "badge ok"; 
+          } else { 
+            badge.textContent = "NEG"; 
+            badge.className = "badge bad"; 
+          }
         }
       }
 
@@ -499,9 +509,9 @@
             <td>${x.code || ""}</td>
             <td>${x.name || ""}</td>
             <td>kq</td>
-            <td class="right">${fmtN(x.min_level ?? 0, 3)}</td>
-            <td>${x.is_active === false ? '<span class="badge warn">arxiv</span>' : '<span class="badge ok">aktiv</span>'}</td>
-            <td class="right"><button class="ghost" onclick="toggleMat('${x.id}')">${x.is_active === false ? "Arxivdən çıxar" : "Arxivlə"}</button></td>
+            <td class="right">${fmtN(x.minLevel ?? 0, 3)}</td>
+            <td>${x.isActive === false ? '<span class="badge warn">arxiv</span>' : '<span class="badge ok">aktiv</span>'}</td>
+            <td class="right"><button class="ghost" onclick="toggleMat('${x.id}')">${x.isActive === false ? "Arxivdən çıxar" : "Arxivlə"}</button></td>
           </tr>`).join("") || '<tr><td colspan="6" class="tiny">Material yoxdur</td></tr>';
 
         $("#view").innerHTML = `
@@ -533,45 +543,46 @@
         const min = Number($("#mMin").value || 0);
         if (!code || !name) { alert("Kod və adı daxil edin"); return; }
         try {
-          await apiPOST("/api/materials", { code, name, uom: "kg", min_level: min, is_active: true });
+          await apiPOST("/api/materials", { 
+            code, 
+            name, 
+            uom: "kg", 
+            minLevel: min, 
+            isActive: true 
+          });
           await fetchMaterials();
-          $("#mCode").value = ""; $("#mName").value = ""; $("#mMin").value = "0";
-        } catch (e) { /* xəta alertlari api helpers */ }
+          $("#mCode").value = ""; 
+          $("#mName").value = ""; 
+          $("#mMin").value = "0";
+        } catch (e) {}
       }
 
       async function toggleMat(id) {
         try {
-          const mat = APP.materials.find(m => m.id === id);
-          if (!mat) return;
-          const updated = Object.assign({}, mat, { is_active: mat.is_active === false ? true : false });
-          // Çox backend-də update üçün PUT /api/materials/{id} istifadə olunur.
-          // Əgər serverdə PUT yoxdursa, buranı serverinə uyğun dəyişsən.
-          try {
-            await apiPUT(`/api/materials/${id}`, updated);
-          } catch (e) {
-            // PUT yoxdur isə bəlkə POST ilə update dəstəklənir:
-            try { await apiPOST("/api/materials", updated); } catch(e2){ throw e2; }
-          }
+          await apiPATCH(`/api/materials/${id}/toggle`);
           await fetchMaterials();
         } catch (e) {}
       }
 
       // --- RECEIPTS ---
       function renderReceipt() {
-        const options = APP.materials.filter(x => x.is_active !== false).map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`).join("");
-        const items = APP.receipts.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||"")).map(r => {
-          const mat = APP.materials.find(m => m.id === r.material_id) || {};
-          return `<tr>
-            <td>${r.date}</td>
-            <td>${mat.code || ""}</td>
-            <td>${mat.name || ""}</td>
-            <td class="right">${fmtN(r.qty_kg, 3)}</td>
-            <td class="right">${fmtMoney(r.price_per_kg)}</td>
-            <td class="right">${fmtMoney(r.total_cost)}</td>
-            <td>${r.supplier || ""}</td>
-            <td class="tiny">${r.note || ""}</td>
-          </tr>`;
-        }).join("") || '<tr><td colspan="8" class="tiny">Qəbul yoxdur</td></tr>';
+        const options = APP.materials.filter(x => x.isActive !== false)
+          .map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`).join("");
+          
+        const items = APP.receipts.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
+          .map(r => {
+            const mat = APP.materials.find(m => m.id === r.materialId) || {};
+            return `<tr>
+              <td>${r.date}</td>
+              <td>${mat.code || ""}</td>
+              <td>${mat.name || ""}</td>
+              <td class="right">${fmtN(r.qtyKg, 3)}</td>
+              <td class="right">${fmtMoney(r.pricePerKg)}</td>
+              <td class="right">${fmtMoney(r.totalCost)}</td>
+              <td>${r.supplier || ""}</td>
+              <td class="tiny">${r.note || ""}</td>
+            </tr>`;
+          }).join("") || '<tr><td colspan="8" class="tiny">Qəbul yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -601,36 +612,56 @@
       }
 
       async function addReceipt() {
-        const material_id = $("#rcMat").value;
+        const materialId = $("#rcMat").value;
         const qty = Number($("#rcQty").value);
         const price = Number($("#rcPrice").value);
         const date = $("#rcDate").value || today();
         const supplier = $("#rcSupplier").value.trim();
         const note = $("#rcNote").value.trim();
-        if (!material_id || qty <= 0 || price < 0) { alert("Material, miqdar (>0) və qiymət (>=0) vacibdir"); return; }
+        
+        if (!materialId || qty <= 0 || price < 0) { 
+          alert("Material, miqdar (>0) və qiymət (>=0) vacibdir"); 
+          return; 
+        }
+        
         try {
-          await apiPOST("/api/receipts", { date, material_id, qty_kg: qty, price_per_kg: price, total_cost: qty * price, supplier, note });
+          await apiPOST("/api/receipts", { 
+            date, 
+            materialId, 
+            qtyKg: qty, 
+            pricePerKg: price, 
+            totalCost: qty * price, 
+            supplier, 
+            note 
+          });
           await fetchReceipts();
           await fetchStock();
+          $("#rcQty").value = "";
+          $("#rcPrice").value = "";
+          $("#rcSupplier").value = "";
+          $("#rcNote").value = "";
         } catch (e) {}
       }
 
       // --- ISSUES ---
       function renderIssue() {
-        const options = APP.materials.filter(x => x.is_active !== false).map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`).join("");
-        const items = APP.issues.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||"")).map(i => {
-          const mat = APP.materials.find(m => m.id === i.material_id) || {};
-          return `<tr>
-            <td>${i.date}</td>
-            <td>${mat.code || ""}</td>
-            <td>${mat.name || ""}</td>
-            <td class="right">${fmtN(i.qty_kg, 3)}</td>
-            <td class="right">${fmtMoney(i.avg_cost_used)}</td>
-            <td class="right">${fmtMoney(i.total_cost_used)}</td>
-            <td>${i.job_ref || ""}</td>
-            <td class="tiny">${i.note || ""}</td>
-          </tr>`;
-        }).join("") || '<tr><td colspan="8" class="tiny">Silmə yoxdur</td></tr>';
+        const options = APP.materials.filter(x => x.isActive !== false)
+          .map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`).join("");
+          
+        const items = APP.issues.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
+          .map(i => {
+            const mat = APP.materials.find(m => m.id === i.materialId) || {};
+            return `<tr>
+              <td>${i.date}</td>
+              <td>${mat.code || ""}</td>
+              <td>${mat.name || ""}</td>
+              <td class="right">${fmtN(i.qtyKg, 3)}</td>
+              <td class="right">${fmtMoney(i.avgCostUsed)}</td>
+              <td class="right">${fmtMoney(i.totalCostUsed)}</td>
+              <td>${i.jobRef || ""}</td>
+              <td class="tiny">${i.note || ""}</td>
+            </tr>`;
+          }).join("") || '<tr><td colspan="8" class="tiny">Silmə yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -644,7 +675,7 @@
               </div>
               <label>Şərh</label><textarea id="isNote" placeholder="Səbəb/işçi"></textarea>
               <div class="row" style="justify-content:space-between;margin-top:8px;">
-                <div class="tiny">Silmə xərci = cari orta qiymət × kq</div>
+                <div class="tiny">Silmə xərci = cari orta qiymət × kq (server hesablayır)</div>
                 <button class="primary" onclick="addIssue()">Silmə əlavə et</button>
               </div>
             </div>
@@ -659,43 +690,61 @@
       }
 
       async function addIssue() {
-        const material_id = $("#isMat").value;
+        const materialId = $("#isMat").value;
         const qty = Number($("#isQty").value);
         const date = $("#isDate").value || today();
-        const job_ref = $("#isJob").value.trim();
+        const jobRef = $("#isJob").value.trim();
         const note = $("#isNote").value.trim();
-        if (!material_id || qty <= 0) { alert("Material və miqdar (>0) vacibdir"); return; }
+        
+        if (!materialId || qty <= 0) { 
+          alert("Material və miqdar (>0) vacibdir"); 
+          return; 
+        }
+        
         try {
-          await apiPOST("/api/issues", { date, material_id, qty_kg: qty, job_ref, note });
+          // Backend avgCostUsed-i hesablayacaq
+          // Əgər backend gözləmirsə, client tərəfdən hesabla:
+          const receipts = APP.receipts.filter(r => r.materialId === materialId);
+          const totalQty = receipts.reduce((a,b) => a + Number(b.qtyKg || 0), 0);
+          const totalCost = receipts.reduce((a,b) => a + Number(b.totalCost || 0), 0);
+          const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
+          
+          await apiPOST("/api/issues", { 
+            date, 
+            materialId, 
+            qtyKg: qty,
+            avgCostUsed: avgCost,
+            totalCostUsed: avgCost * qty,
+            jobRef, 
+            note 
+          });
           await fetchIssues();
           await fetchStock();
+          $("#isQty").value = "";
+          $("#isJob").value = "";
+          $("#isNote").value = "";
         } catch (e) {}
       }
 
       // --- STOCK ---
       function renderStock() {
         const rows = (APP.stock || []).map(r => {
-          const code = r.code || (r.mat && r.mat.code) || "";
-          const name = r.name || (r.mat && r.mat.name) || "";
-          const onHand = r.onHand ?? r.qty ?? 0;
-          const avg = r.avg ?? r.avg_cost ?? 0;
-          const inv = r.inv ?? r.inv_value ?? (onHand * avg);
-          const health = onHand <= (r.min_level || 0) ? "warn" : "ok";
+          const health = r.onHandKg <= (r.minLevel || 0) ? "warn" : "ok";
           return `<tr>
-            <td>${code}</td>
-            <td>${name}</td>
-            <td class="right">${fmtN(onHand, 3)}</td>
-            <td class="right">${fmtMoney(avg)}</td>
-            <td class="right">${fmtMoney(inv)}</td>
-            <td><span class="badge ${health}">${health === "ok" ? "OK" : "LOW"}</span></td>
+            <td>${r.code || ""}</td>
+            <td>${r.name || ""}</td>
+            <td class="right">${fmtN(r.onHandKg, 3)}</td>
+            <td class="right">${fmtMoney(r.avgCostPerKg)}</td>
+            <td class="right">${fmtMoney(r.inventoryValue)}</td>
+            <td><span class="badge ${health}">${r.status === "low" || health === "warn" ? "LOW" : "OK"}</span></td>
           </tr>`;
-        }).join("") || '<tr><td colspan="6" class="tiny">Нет данных по складу</td></tr>';
+        }).join("") || '<tr><td colspan="6" class="tiny">Anbar məlumatı yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="card">
             <div class="section-title">Anbar qalıqları (kq)</div>
             <table>
-              <thead><tr><th>Kod</th><th>Material</th><th class="right">Varlıqdakı (kq)</th><th class="right">Orta qiymət (₼/kq)</th><th class="right">İnventar dəyəri</th><th>Stat</th></tr></thead>
+              <thead><tr><th>Kod</th><th>Material</th><th class="right">Varlıqdakı (kq)</th><th class="right">Orta qiymət (₼/kq)</th><th class="right">İnventar dəyəri</th><th>Status</th></tr></thead>
               <tbody>${rows}</tbody>
             </table>
           </div>`;
@@ -703,7 +752,16 @@
 
       // --- FINANCE ---
       function renderFinance() {
-        const list = (APP.finances || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||"")).map(f => `<tr><td>${f.date}</td><td>${f.type === "income" ? "Gəlir" : "Xərc"}</td><td>${f.category||""}</td><td>${f.counterparty||""}</td><td class="right">${fmtMoney(f.amount_azn||0)}</td><td class="tiny">${f.note||""}</td></tr>`).join("") || '<tr><td colspan="6" class="tiny">Нет записей</td></tr>';
+        const list = (APP.finances || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
+          .map(f => `<tr>
+            <td>${f.date}</td>
+            <td>${f.type === "income" ? "Gəlir" : "Xərc"}</td>
+            <td>${f.category||""}</td>
+            <td>${f.counterparty||""}</td>
+            <td class="right">${fmtMoney(f.amountAzn||0)}</td>
+            <td class="tiny">${f.note||""}</td>
+          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Qeyd yoxdur</td></tr>';
+          
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
@@ -735,35 +793,60 @@
         const date = $("#fnDate").value || today();
         const counterparty = $("#fnCp").value.trim();
         const note = $("#fnNote").value.trim();
-        if (!category || amount < 0) { alert("Kateqoriya və məbləğ daxil edin"); return; }
+        
+        if (!category || amount < 0) { 
+          alert("Kateqoriya və məbləğ daxil edin"); 
+          return; 
+        }
+        
         try {
-          await apiPOST("/api/finances", { date, type, category, amount_azn: amount, counterparty, note });
+          await apiPOST("/api/finances", { 
+            date, 
+            type, 
+            category, 
+            amountAzn: amount, 
+            counterparty, 
+            note 
+          });
           await fetchFinances();
           await fetchPL();
+          $("#fnCat").value = "";
+          $("#fnAmt").value = "";
+          $("#fnCp").value = "";
+          $("#fnNote").value = "";
         } catch (e) {}
       }
 
       // --- AR / AP ---
       function arRemaining(entry) {
-        const paid = (entry.payments || []).reduce((a,b) => a + Number(b.amount_azn || 0), 0);
-        return (entry.amount_azn || 0) - paid;
+        const paid = (entry.payments || []).reduce((a,b) => a + Number(b.amountAzn || 0), 0);
+        return (entry.amountAzn || 0) - paid;
       }
-      function apRemaining(entry) { return arRemaining(entry); }
+      
+      function apRemaining(entry) { 
+        return arRemaining(entry); 
+      }
 
       function renderARAP() {
-        const arRows = (APP.ar || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||"")).map(e => `<tr>
-          <td>${e.date}</td><td>${e.counterparty||""}</td><td class="right">${fmtMoney(e.amount_azn||0)}</td>
-          <td class="right">${fmtMoney(arRemaining(e))}</td>
-          <td>${e.status||""}</td>
-          <td class="right"><button class="ghost" onclick="addARPayPrompt('${e.id}')">Ödəniş</button></td>
-        </tr>`).join("") || '<tr><td colspan="6" class="tiny">Нет должников</td></tr>';
+        const arRows = (APP.ar || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
+          .map(e => `<tr>
+            <td>${e.date}</td>
+            <td>${e.counterparty||""}</td>
+            <td class="right">${fmtMoney(e.amountAzn||0)}</td>
+            <td class="right">${fmtMoney(arRemaining(e))}</td>
+            <td>${e.status||""}</td>
+            <td class="right"><button class="ghost" onclick="addARPayPrompt('${e.id}')">Ödəniş</button></td>
+          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Debitor yoxdur</td></tr>';
 
-        const apRows = (APP.ap || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||"")).map(e => `<tr>
-          <td>${e.date}</td><td>${e.counterparty||""}</td><td class="right">${fmtMoney(e.amount_azn||0)}</td>
-          <td class="right">${fmtMoney(apRemaining(e))}</td>
-          <td>${e.status||""}</td>
-          <td class="right"><button class="ghost" onclick="addAPPayPrompt('${e.id}')">Ödəniş</button></td>
-        </tr>`).join("") || '<tr><td colspan="6" class="tiny">Нет кредиторов</td></tr>';
+        const apRows = (APP.ap || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
+          .map(e => `<tr>
+            <td>${e.date}</td>
+            <td>${e.counterparty||""}</td>
+            <td class="right">${fmtMoney(e.amountAzn||0)}</td>
+            <td class="right">${fmtMoney(apRemaining(e))}</td>
+            <td>${e.status||""}</td>
+            <td class="right"><button class="ghost" onclick="addAPPayPrompt('${e.id}')">Ödəniş</button></td>
+          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Kreditor yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -809,22 +892,53 @@
         const amount = Number($("#arAmt").value);
         const status = $("#arStatus").value;
         const note = $("#arNote").value.trim();
-        if (!counterparty || amount <= 0) { alert("Kontragent və məbləğ (>0) vacibdir"); return; }
+        
+        if (!counterparty || amount <= 0) { 
+          alert("Kontragent və məbləğ (>0) vacibdir"); 
+          return; 
+        }
+        
         try {
-          await apiPOST("/api/ar", { counterparty, date, amount_azn: amount, status, payments: [], note });
+          await apiPOST("/api/ar", { 
+            counterparty, 
+            date, 
+            amountAzn: amount, 
+            status, 
+            payments: [], 
+            note 
+          });
           await fetchARAP();
+          $("#arCp").value = "";
+          $("#arAmt").value = "";
+          $("#arNote").value = "";
         } catch (e) {}
       }
+      
       async function addAP() {
         const counterparty = $("#apCp").value.trim();
         const date = $("#apDate").value || today();
         const amount = Number($("#apAmt").value);
         const status = $("#apStatus").value;
         const note = $("#apNote").value.trim();
-        if (!counterparty || amount <= 0) { alert("Kontragent və məbləğ (>0) vacibdir"); return; }
+        
+        if (!counterparty || amount <= 0) { 
+          alert("Kontragent və məbləğ (>0) vacibdir"); 
+          return; 
+        }
+        
         try {
-          await apiPOST("/api/ap", { counterparty, date, amount_azn: amount, status, payments: [], note });
+          await apiPOST("/api/ap", { 
+            counterparty, 
+            date, 
+            amountAzn: amount, 
+            status, 
+            payments: [], 
+            note 
+          });
           await fetchARAP();
+          $("#apCp").value = "";
+          $("#apAmt").value = "";
+          $("#apNote").value = "";
         } catch (e) {}
       }
 
@@ -835,11 +949,16 @@
         if (amt === null) return;
         const a = Number(amt);
         if (!(a > 0)) return alert("Yanlış məbləğ");
+        
         try {
-          await apiPOST(`/api/ar/${id}/payment`, { date: today(), amount_azn: a });
+          await apiPOST(`/api/ar/${id}/payments`, { 
+            date: today(), 
+            amountAzn: a 
+          });
           await fetchARAP();
         } catch (e) {}
       }
+      
       async function addAPPayPrompt(id) {
         const e = APP.ap.find(x => x.id === id);
         if (!e) return;
@@ -847,8 +966,12 @@
         if (amt === null) return;
         const a = Number(amt);
         if (!(a > 0)) return alert("Yanlış məbləğ");
+        
         try {
-          await apiPOST(`/api/ap/${id}/payment`, { date: today(), amount_azn: a });
+          await apiPOST(`/api/ap/${id}/payments`, { 
+            date: today(), 
+            amountAzn: a 
+          });
           await fetchARAP();
         } catch (e) {}
       }
@@ -858,10 +981,11 @@
         const from = today().slice(0, 7) + "-01";
         const to = today();
         const p = APP.pl || {};
+        
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
-              <div class="section-title">P&L üzrə</div>
+              <div class="section-title">Mənfəət/Zərər hesabatı</div>
               <div class="row wrap">
                 <div style="flex:1 1 160px;"><label>Başlanğıc</label><input id="rpFrom" type="date" value="${from}"></div>
                 <div style="flex:1 1 160px;"><label>Son</label><input id="rpTo" type="date" value="${to}"></div>
@@ -871,16 +995,16 @@
                 <table>
                   <tbody>
                     <tr><td>Gəlir</td><td class="right">${fmtMoney(p.revenue || 0)}</td></tr>
-                    <tr><td>COGS</td><td class="right">${fmtMoney(p.cogs || 0)}</td></tr>
-                    <tr><th>Brüt</th><th class="right">${fmtMoney(p.gross || ( (p.revenue||0)-(p.cogs||0) ))}</th></tr>
-                    <tr><td>Xərclər</td><td class="right">${fmtMoney(p.expenses || 0)}</td></tr>
-                    <tr><th>Net</th><th class="right">${fmtMoney(p.net || ((p.revenue||0)-(p.cogs||0)-(p.expenses||0)))}</th></tr>
+                    <tr><td>Satılan malın maya dəyəri (COGS)</td><td class="right">${fmtMoney(p.cogs || 0)}</td></tr>
+                    <tr><th>Brüt mənfəət</th><th class="right">${fmtMoney(p.grossProfit || 0)}</th></tr>
+                    <tr><td>Digər xərclər</td><td class="right">${fmtMoney(p.expenses || 0)}</td></tr>
+                    <tr><th>Xalis mənfəət</th><th class="right">${fmtMoney(p.netProfit || 0)}</th></tr>
                   </tbody>
                 </table>
               </div>
             </div>
             <div class="card">
-              <div class="section-title">Material hərəkətləri (ümumi)</div>
+              <div class="section-title">Material hərəkətləri</div>
               <div id="mvBox"></div>
             </div>
           </div>`;
@@ -888,30 +1012,31 @@
       }
 
       function renderMovement() {
-        const rows = (APP.materials || []).map(mat => {
-          const inQty = (APP.receipts || []).filter(r => r.material_id === mat.id).reduce((a,b)=>a+Number(b.qty_kg||0),0);
-          const inSum = (APP.receipts || []).filter(r => r.material_id === mat.id).reduce((a,b)=>a+Number(b.total_cost||0),0);
-          const outQty = (APP.issues || []).filter(i => i.material_id === mat.id).reduce((a,b)=>a+Number(b.qty_kg||0),0);
-          const outSum = (APP.issues || []).filter(i => i.material_id === mat.id).reduce((a,b)=>a+Number(b.total_cost_used||0),0);
-          return `<tr><td>${mat.code}</td><td>${mat.name}</td><td class="right">${fmtN(inQty,3)}</td><td class="right">${fmtMoney(inSum)}</td><td class="right">${fmtN(outQty,3)}</td><td class="right">${fmtMoney(outSum)}</td></tr>`;
+        const rows = (APP.movements || []).map(m => {
+          return `<tr>
+            <td>${m.code}</td>
+            <td>${m.name}</td>
+            <td class="right">${fmtN(m.inQty, 3)}</td>
+            <td class="right">${fmtMoney(m.inSum)}</td>
+            <td class="right">${fmtN(m.outQty, 3)}</td>
+            <td class="right">${fmtMoney(m.outSum)}</td>
+          </tr>`;
         }).join("") || '<tr><td colspan="6" class="tiny">Heç bir məlumat yoxdur</td></tr>';
-        $("#mvBox").innerHTML = `<table><thead><tr><th>Kod</th><th>Material</th><th class="right">Giriş (kq)</th><th class="right">Giriş (₼)</th><th class="right">Çıxış (kq)</th><th class="right">Çıxış (₼)</th></tr></thead><tbody>${rows}</tbody></table>`;
-      }
-
-      // --- SETTINGS ---
-      function renderSettings() {
-        $("#view").innerHTML = `
-          <div class="grid cols-2">
-            <div class="card">
-              <div class="section-title">Sistem</div>
-              <div class="tiny">Server: <b>${BASE}</b></div>
-              <div style="margin-top:8px" class="tiny">Bu tətbiq bütün əməliyyatları serverə yönləndirir. Server 500 (Internal) və ya CORS xətası verərsə, konsolda (F12) tam məlumatı görə bilərsən.</div>
-            </div>
-            <div class="card">
-              <div class="section-title">Qeydlər</div>
-              <div class="tiny">Bu frontend localStorage istifadə etmir — bütün məlumat serverdə saxlanılır. Əgər server auth tələb edirsə, API_HEADERS içərisində Authorization başlığı əlavə et.</div>
-            </div>
-          </div>`;
+        
+        $("#mvBox").innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Kod</th>
+                <th>Material</th>
+                <th class="right">Giriş (kq)</th>
+                <th class="right">Giriş (₼)</th>
+                <th class="right">Çıxış (kq)</th>
+                <th class="right">Çıxış (₼)</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>`;
       }
 
       // ====== İNİT ======
@@ -923,19 +1048,15 @@
         else if (currentTab === "finance") renderFinance();
         else if (currentTab === "arap") renderARAP();
         else if (currentTab === "reports") renderReports();
-        else if (currentTab === "settings") renderSettings();
       }
 
       async function refreshAll() {
         try {
-          await Promise.allSettled([
-            fetchMaterials(), fetchReceipts(), fetchIssues(), fetchStock(), fetchFinances(), fetchARAP(), fetchPL()
-          ]);
+          await fetchMaterials();
+          await fetchStock();
         } catch (e) {
           console.warn("refreshAll error", e);
         }
-        renderTabs();
-        renderView();
       }
 
       // start
