@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Material anbarı • Maliyyə (Gəlir/Xərc, AR/AP) — AZN</title>
+<style>
+  :root {
+    --bg:#0b1020; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8; --border:#27324a;
+    --pill:#0b1220; --accent:#38bdf8; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,sans-serif;}
+  .app{max-width:1260px;margin:0 auto;padding:20px;}
+  h1{margin:0 0 8px;font-size:22px;}
+  .sub{color:var(--muted);font-size:12px;}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px;}
+  .tab{padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:var(--pill);color:var(--muted);font-weight:600;cursor:pointer;}
+  .tab.active{background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff;border:none;}
+  .grid{display:grid;gap:12px;}
+  .cols-2{grid-template-columns:repeat(2,1fr);}
+  .cols-3{grid-template-columns:repeat(3,1fr);}
+  .cols-4{grid-template-columns:repeat(4,1fr);}
+  @media(max-width:1024px){.cols-4{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:720px){.cols-4,.cols-3,.cols-2{grid-template-columns:1fr;}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;}
+  .kpi{display:flex;align-items:center;justify-content:space-between;}
+  .kpi .val{font-size:22px;font-weight:800;}
+  .muted{color:var(--muted);}
+  .tiny{font-size:11px;color:var(--muted);}
+  .row{display:flex;gap:10px;align-items:center;}
+  .row.wrap{flex-wrap:wrap;}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--pill);color:var(--text);}
+  textarea{min-height:72px;}
+  button{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--pill);color:var(--text);cursor:pointer;}
+  button.primary{background:linear-gradient(135deg,#2563eb,#06b6d4);border:none;color:#fff;}
+  button.ghost{background:transparent;}
+  table{width:100%;border-collapse:collapse;}
+  th,td{text-align:left;padding:10px;border-bottom:1px dashed var(--border);font-size:14px;}
+  th{color:var(--muted);font-weight:700;}
+  .right{text-align:right;}
+  .badge{padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--pill);font-size:12px;}
+  .badge.ok{color:var(--ok);border-color:#22c55e30;background:#22c55e10;}
+  .badge.warn{color:var(--warn);border-color:#f59e0b30;background:#f59e0b10;}
+  .badge.bad{color:var(--bad);border-color:#ef444430;background:#ef444410;}
+  .foot{margin-top:12px;color:var(--muted);font-size:12px;}
+  .section-title{font-size:16px;font-weight:800;margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Material anbarı (kq) + Maliyyə (AR/AP)</h1>
+  <div class="sub">Valyuta: <b>AZN (₼)</b> • Ölçü vahidi: <b>kq</b></div>
+
+  <!-- KPI -->
+  <div class="grid cols-4" style="margin-top:12px">
+    <div class="card kpi"><div><div class="muted">Material qalığı</div><div class="val" id="kpiOnHandKg">0</div></div><span class="badge">kq</span></div>
+    <div class="card kpi"><div><div class="muted">İnventar dəyəri</div><div class="val" id="kpiInvValue">₼ 0</div></div><span class="badge">AZN</span></div>
+    <div class="card kpi"><div><div class="muted">Dövür üzrə gəlir</div><div class="val" id="kpiRevenue">₼ 0</div></div><span class="badge">AZN</span></div>
+    <div class="card kpi"><div><div class="muted">Dövür üzrə xalis mənfəət</div><div class="val" id="kpiNet">₼ 0</div></div><span class="badge ok" id="kpiNetBadge">OK</span></div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="view"></div>
+  <div class="foot">Məsləhət: əvvəlcə material kataloqunu doldurun, sonra gələn və silinən qeydləri yaradın. Ehtiyat nüsxə üçün JSON ixrac edin.</div>
+</div>
+
+<script>
+const API_BASE = "http://116.203.51.133/api";
+const AZN="₼";
+let state={};
+
+const $ = s=>document.querySelector(s);
+const fmtN = (n,d=2)=>(n??0).toLocaleString(undefined,{maximumFractionDigits:d});
+const fmtMoney = n=>`${AZN} ${fmtN(n,2)}`;
+const today = ()=>new Date().toISOString().slice(0,10);
+
+const TABS=[
+{id:"materials",name:"Materiallar"},
+{id:"receipt",name:"Qəbul"},
+{id:"issue",name:"Silmə"},
+{id:"stock",name:"Anbar"},
+{id:"finance",name:"Maliyyə (Gəlir/Xərc)"},
+{id:"arap",name:"Debitor/Kreditor (AR/AP)"},
+{id:"reports",name:"Hesabatlar"},
+{id:"settings",name:"Parametrlər"},
+];
+let currentTab="materials";
+
+// ===== API helpers =====
+async function apiGet(endpoint){ const res=await fetch(API_BASE+endpoint); if(!res.ok) throw new Error(endpoint); return res.json();}
+async function apiPost(endpoint,data){ const res=await fetch(API_BASE+endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)}); if(!res.ok) throw new Error(endpoint); return res.json();}
+
+// ===== Load State =====
+async function load(){
+    try{
+        state.materials = await apiGet("/materials");
+        state.receipts = await apiGet("/receipts");
+        state.issues = await apiGet("/issues");
+        state.finances = await apiGet("/finances");
+        state.ar = await apiGet("/ar");
+        state.ap = await apiGet("/ap");
+        state.settings = await apiGet("/settings");
+        state.materials ||= [];
+        state.receipts ||= [];
+        state.issues ||= [];
+        state.finances ||= [];
+        state.ar ||= [];
+        state.ap ||= [];
+        state.settings ||= {lowStockGlobal:5};
+    }catch(e){console.error("API load failed",e);}
+}
+
+// ===== Tabs =====
+function renderTabs(){
+    $("#tabs").innerHTML = TABS.map(t=>`<button class="tab ${currentTab===t.id?'active':''}" onclick="switchTab('${t.id}')">${t.name}</button>`).join("");
+}
+function switchTab(id){currentTab=id; renderTabs(); renderView();}
+
+// ===== Materials =====
+async function addMaterial(){
+    const code=$("#mCode").value.trim();
+    const name=$("#mName").value.trim();
+    const min=Number($("#mMin").value||0);
+    if(!code||!name){alert("Kod və adı daxil edin");return;}
+    try{
+        const newMat = await apiPost("/materials",{code,name,uom:"kg",min_level:min,is_active:true});
+        state.materials.push(newMat);
+        $("#mCode").value=""; $("#mName").value=""; $("#mMin").value="0";
+        refresh();
+    }catch(e){alert("Material əlavə edilə bilmədi")}
+}
+
+async function toggleMat(id){
+    const m = state.materials.find(x=>x.id===id);
+    if(!m) return;
+    try{
+        const updated = await apiPost("/materials",{...m,is_active:!m.is_active});
+        Object.assign(m,updated);
+        refresh();
+    }catch(e){alert("Status dəyişdirilə bilmədi")}
+}
+
+function renderMaterials(){
+    const list=state.materials.map(x=>`<tr>
+        <td>${x.code||""}</td><td>${x.name||""}</td><td>kq</td><td class="right">${fmtN(x.min_level??0,3)}</td>
+        <td>${x.is_active===false?'<span class="badge warn">arxiv</span>':'<span class="badge ok">aktiv</span>'}</td>
+        <td class="right"><button class="ghost" onclick="toggleMat('${x.id}')">${x.is_active===false?'Arxivdən çıxar':'Arxivlə'}</button></td>
+    </tr>`).join("")||'<tr><td colspan="6" class="tiny">Material yoxdur</td></tr>';
+    $("#view").innerHTML=`<div class="grid cols-2">
+    <div class="card"><div class="section-title">Material bələdçisi</div>
+      <div class="row wrap">
+        <div style="flex:1 1 150px;"><label>Kod</label><input id="mCode" placeholder="MTL-001"></div>
+        <div style="flex:2 1 260px;"><label>Ad</label><input id="mName" placeholder="Poliamid qranul"></div>
+        <div style="flex:1 1 120px;"><label>Minimum qalıq (kq)</label><input id="mMin" type="number" step="0.001" value="0"></div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:8px;">
+        <button class="primary" onclick="addMaterial()">Material əlavə et</button>
+      </div>
+    </div>
+    <div class="card"><div class="section-title">Materiallar</div>
+      <table><thead><tr><th>Kod</th><th>Ad</th><th>Vahid</th><th class="right">Minimum qalıq</th><th>Status</th><th class="right">Əməliyyatlar</th></tr></thead><tbody>${list}</tbody></table>
+    </div>
+  </div>`;
+}
+
+// ===== Receipt =====
+async function addReceipt(){
+    const mat=$("#rMaterial").value;
+    const qty=Number($("#rQty").value||0);
+    const price=Number($("#rPrice").value||0);
+    const date=$("#rDate").value||today();
+    const supplier=$("#rSupplier").value||"";
+    const comment=$("#rComment").value||"";
+    if(!mat||qty<=0||price<0){alert("Düzgün məlumat daxil edin");return;}
+    try{
+        const rec = await apiPost("/receipts",{material_id:mat,qty_kg:qty,price_per_kg:price,total_cost:qty*price,date,supplier,comment});
+        state.receipts.push(rec);
+        refresh();
+    }catch(e){alert("Qəbul əlavə edilə bilmədi")}
+}
+
+function renderReceipt(){
+    const list=state.receipts.map(r=>{
+        const m=state.materials.find(x=>x.id===r.material_id);
+        return `<tr><td>${r.date}</td><td>${m?.code||""}</td><td>${m?.name||""}</td><td>${fmtN(r.qty_kg,3)}</td><td>${fmtMoney(r.price_per_kg)}</td><td>${fmtMoney(r.total_cost)}</td><td>${r.supplier||""}</td><td>${r.comment||""}</td></tr>`;
+    }).join("")||'<tr><td colspan="8" class="tiny">Qəbul yoxdur</td></tr>';
+    $("#view").innerHTML=`<div class="grid cols-2">
+    <div class="card"><div class="section-title">Material qəbulu</div>
+      <div class="row wrap">
+        <div style="flex:1 1 150px;"><label>Material</label><select id="rMaterial">${state.materials.filter(m=>m.is_active).map(m=>`<option value="${m.id}">${m.name}</option>`).join("")}</select></div>
+        <div style="flex:1 1 100px;"><label>Miqdar (kq)</label><input id="rQty" type="number" step="0.001" value="0"></div>
+        <div style="flex:1 1 100px;"><label>1 kq üçün qiymət (₼)</label><input id="rPrice" type="number" step="0.01" value="0"></div>
+        <div style="flex:1 1 120px;"><label>Tarix</label><input type="date" id="rDate" value="${today()}"></div>
+        <div style="flex:1 1 150px;"><label>Təchizatçı</label><input id="rSupplier"></div>
+        <div style="flex:2 1 260px;"><label>Şərh</label><input id="rComment"></div>
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addReceipt()">Qəbulu əlavə et</button></div>
+    </div>
+    <div class="card"><div class="section-title">Son qəbullar</div>
+      <table><thead><tr><th>Tarix</th><th>Kod</th><th>Material</th><th>kq</th><th>Qiymət/kq</th><th>Məbləğ</th><th>Təchizatçı</th><th>Şərh</th></tr></thead><tbody>${list}</tbody></table>
+    </div>
+  </div>`;
+}
+
+// ===== KPI =====
+async function refreshKPI(){
+    try{
+        const kpi = await apiGet("/kpi");
+        document.getElementById("kpiOnHandKg").textContent = fmtN(kpi.onHandKg,3);
+        document.getElementById("kpiInvValue").textContent = fmtMoney(kpi.inv);
+        document.getElementById("kpiRevenue").textContent = fmtMoney(kpi.revenue||0);
+        document.getElementById("kpiNet").textContent = fmtMoney(kpi.net||0);
+        document.getElementById("kpiNetBadge").className = kpi.net>=0?"badge ok":"badge bad";
+    }catch(e){console.error(e);}
+}
+
+// ===== Render View =====
+function renderView(){
+    if(currentTab==="materials") renderMaterials();
+    else if(currentTab==="receipt") renderReceipt();
+    else if(currentTab==="issue") $("#view").innerHTML="<div class='card'>Silmə tab gələcək...</div>";
+    else if(currentTab==="stock") $("#view").innerHTML="<div class='card'>Anbar tab gələcək...</div>";
+    else if(currentTab==="finance") $("#view").innerHTML="<div class='card'>Maliyyə tab gələcək...</div>";
+    else if(currentTab==="arap") $("#view").innerHTML="<div class='card'>AR/AP tab gələcək...</div>";
+    else if(currentTab==="reports") $("#view").innerHTML="<div class='card'>Hesabatlar tab gələcək...</div>";
+    else if(currentTab==="settings") $("#view").innerHTML="<div class='card'>Parametrlər tab gələcək...</div>";
+}
+
+// ===== Refresh & Init =====
+async function refresh(){
+    renderTabs();
+    renderView();
+    await refreshKPI();
+}
+
+async function initApp(){
+    await load();
+    refresh();
+}
+
+initApp();
+</script>
+</body>
+</html>
