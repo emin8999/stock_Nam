@@ -1,33 +1,15 @@
 package com.backend.service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDate;
+
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.backend.dto.KpiDTO;
-import com.backend.dto.PaymentDTO;
-import com.backend.dto.ProfitLossDTO;
-import com.backend.dto.StockDTO;
-import com.backend.entity.AccountsPayable;
-import com.backend.entity.AccountsReceivable;
-import com.backend.entity.Finance;
-import com.backend.entity.Issue;
+
 import com.backend.entity.Material;
-import com.backend.entity.Payment;
-import com.backend.entity.Receipt;
-import com.backend.entity.Settings;
-import com.backend.repository.AccountsPayableRepository;
-import com.backend.repository.AccountsReceivableRepository;
-import com.backend.repository.FinanceRepository;
-import com.backend.repository.IssueRepository;
+
 import com.backend.repository.MaterialRepository;
-import com.backend.repository.PaymentRepository;
-import com.backend.repository.ReceiptRepository;
-import com.backend.repository.SettingsRepository;
+
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

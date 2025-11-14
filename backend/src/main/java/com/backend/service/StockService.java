@@ -15,7 +15,6 @@ import com.backend.dto.StockSnapshotDTO;
 import com.backend.entity.Issue;
 import com.backend.entity.Material;
 import com.backend.entity.Receipt;
-import com.backend.entity.Finance;
 
 import lombok.RequiredArgsConstructor;
 
