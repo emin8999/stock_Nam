@@ -39,25 +39,68 @@
         color: var(--muted);
         font-size: 12px;
       }
+      .tab-container {
+        display: flex;
+        gap: 16px;
+        margin: 16px 0;
+      }
+      .tab-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .tab-group-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--muted);
+        font-weight: 700;
+        padding-left: 4px;
+      }
       .tabs {
         display: flex;
-        gap: 8px;
+        gap: 6px;
         flex-wrap: wrap;
-        margin: 12px 0 16px;
       }
       .tab {
-        padding: 10px 14px;
+        padding: 8px 12px;
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: 10px;
         background: #0b1220;
         color: #cbd5e1;
         font-weight: 600;
         cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+      .tab:hover {
+        background: #1a2332;
+        border-color: #38bdf8;
       }
       .tab.active {
         background: linear-gradient(135deg, #2563eb, #06b6d4);
         color: #fff;
         border: none;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      }
+      @media (max-width: 900px) {
+        .tab-container {
+          gap: 12px;
+        }
+        .tab {
+          font-size: 12px;
+          padding: 7px 10px;
+        }
+      }
+      @media (max-width: 600px) {
+        .tabs {
+          gap: 4px;
+        }
+        .tab {
+          font-size: 11px;
+          padding: 6px 8px;
+        }
       }
       .grid {
         display: grid;
@@ -230,14 +273,19 @@
         animation: spin 1s linear infinite;
         display: inline-block;
       }
-      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
   <body>
     <div class="app">
       <h1>Material anbarı (kq) + Maliyyə (AR/AP)</h1>
       <div class="sub">
-        Valyuta: <b>AZN (₼)</b> • Ölçü vahidi: <b>kq</b> • Backend API: <b id="baseUrl">http://116.203.51.133:8085/stock</b>
+        Valyuta: <b>AZN (₼)</b> • Ölçü vahidi: <b>kq</b> • Backend API:
+        <b id="baseUrl">http://116.203.51.133:8085/stock</b>
       </div>
 
       <!-- KPI -->
@@ -272,11 +320,12 @@
         </div>
       </div>
 
-      <div class="tabs" id="tabs"></div>
+      <div class="tab-container" id="tabContainer"></div>
       <div id="view"></div>
 
       <div class="foot">
-        Məsləhət: əvvəlcə material kataloqunu əlavə edin, sonra gələn və silinən qeydləri yaradın.
+        Məsləhət: əvvəlcə kataloqunu əlavə edin, sonra gələn və çıxan
+        əməliyyatları yaradın.
       </div>
     </div>
 
@@ -290,21 +339,40 @@
       };
 
       // helperlər
-      const $ = s => document.querySelector(s);
+      const $ = (s) => document.querySelector(s);
       const fmtN = (n, d = 2) =>
         (n ?? 0).toLocaleString(undefined, { maximumFractionDigits: d });
-      const fmtMoney = n => `₼ ${fmtN(n, 2)}`;
+      const fmtMoney = (n) => `₼ ${fmtN(n, 2)}`;
       const today = () => new Date().toISOString().slice(0, 10);
 
-      // TABS
-      const TABS = [
-        { id: "materials", name: "Materiallar" },
-        { id: "receipt", name: "Qəbul" },
-        { id: "issue", name: "Silmə" },
-        { id: "stock", name: "Anbar" },
-        { id: "finance", name: "Maliyyə (Gəlir/Xərc)" },
-        { id: "arap", name: "Debitor/Kreditor (AR/AP)" },
-        { id: "reports", name: "Hesabatlar" },
+      // TABS - Qruplarla təşkil edilmiş
+      const TAB_GROUPS = [
+        {
+          title: "🏭 Material Anbarı (Zavod)",
+          tabs: [
+            { id: "materials", name: "Materiallar" },
+            { id: "receipt", name: "Qəbul" },
+            { id: "issue", name: "Silmə" },
+            { id: "stock", name: "Anbar Qalığı" },
+          ],
+        },
+        {
+          title: "📦 Məhsul Anbarı",
+          tabs: [
+            { id: "products", name: "Məhsullar" },
+            { id: "product_receipt", name: "Qəbul" },
+            { id: "product_transfer", name: "Köçürmə" },
+            { id: "product_stock", name: "Anbar Qalığı" },
+          ],
+        },
+        {
+          title: "💰 Maliyyə və Hesabatlar",
+          tabs: [
+            { id: "finance", name: "Gəlir/Xərc" },
+            { id: "arap", name: "AR/AP" },
+            { id: "reports", name: "Hesabatlar" },
+          ],
+        },
       ];
       let currentTab = "materials";
 
@@ -314,40 +382,78 @@
         receipts: [],
         issues: [],
         stock: [],
+        products: [],
+        productReceipts: [],
+        productTransfers: [],
+        productStock: [],
         finances: [],
         ar: [],
         ap: [],
         kpi: null,
       };
 
-      // render tabs
+      // render tabs - qruplarla
       function renderTabs() {
-        $("#tabs").innerHTML = TABS.map(
-          (t) =>
-            `<button class="tab ${currentTab === t.id ? "active" : ""}" onclick="switchTab('${t.id}')">${t.name}</button>`
+        $("#tabContainer").innerHTML = TAB_GROUPS.map(
+          (group) => `
+          <div class="tab-group">
+            <div class="tab-group-title">${group.title}</div>
+            <div class="tabs">
+              ${group.tabs
+                .map(
+                  (t) => `
+                <button class="tab ${
+                  currentTab === t.id ? "active" : ""
+                }" onclick="switchTab('${t.id}')">${t.name}</button>
+              `
+                )
+                .join("")}
+            </div>
+          </div>
+        `
         ).join("");
       }
-      
+
       function switchTab(id) {
         currentTab = id;
         renderTabs();
         renderView();
         // avtomatik fetch
         if (id === "materials") fetchMaterials();
-        else if (id === "receipt") { fetchMaterials(); fetchReceipts(); }
-        else if (id === "issue") { fetchMaterials(); fetchIssues(); }
-        else if (id === "stock") fetchStock();
+        else if (id === "receipt") {
+          fetchMaterials();
+          fetchReceipts();
+        } else if (id === "issue") {
+          fetchMaterials();
+          fetchIssues();
+        } else if (id === "stock") fetchStock();
+        else if (id === "products") fetchProducts();
+        else if (id === "product_receipt") {
+          fetchProducts();
+          fetchProductReceipts();
+        } else if (id === "product_transfer") {
+          fetchProducts();
+          fetchProductTransfers();
+        } else if (id === "product_stock") fetchProductStock();
         else if (id === "finance") fetchFinances();
         else if (id === "arap") fetchARAP();
-        else if (id === "reports") { fetchMaterials(); fetchReceipts(); fetchIssues(); fetchPL(); }
+        else if (id === "reports") {
+          fetchMaterials();
+          fetchReceipts();
+          fetchIssues();
+          fetchPL();
+        }
       }
 
       // ====== API helpers ======
       async function apiGET(path) {
         try {
-          const res = await fetch(BASE + path, { method: "GET", headers: API_HEADERS });
+          const res = await fetch(BASE + path, {
+            method: "GET",
+            headers: API_HEADERS,
+          });
           if (!res.ok) {
-            const text = await res.text().catch(()=>"");
+            const text = await res.text().catch(() => "");
             throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return await res.json();
@@ -357,7 +463,7 @@
           throw e;
         }
       }
-      
+
       async function apiPOST(path, body) {
         try {
           const res = await fetch(BASE + path, {
@@ -366,7 +472,7 @@
             body: JSON.stringify(body),
           });
           if (!res.ok) {
-            const text = await res.text().catch(()=>"");
+            const text = await res.text().catch(() => "");
             throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return await res.json();
@@ -376,7 +482,7 @@
           throw e;
         }
       }
-      
+
       async function apiPUT(path, body) {
         try {
           const res = await fetch(BASE + path, {
@@ -385,7 +491,7 @@
             body: JSON.stringify(body),
           });
           if (!res.ok) {
-            const text = await res.text().catch(()=>"");
+            const text = await res.text().catch(() => "");
             throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return await res.json();
@@ -403,7 +509,7 @@
             headers: API_HEADERS,
           });
           if (!res.ok) {
-            const text = await res.text().catch(()=>"");
+            const text = await res.text().catch(() => "");
             throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return res.status === 204 ? {} : await res.json();
@@ -421,21 +527,21 @@
           if (currentTab === "materials") renderMaterials();
         } catch (e) {}
       }
-      
+
       async function fetchReceipts() {
         try {
           APP.receipts = await apiGET("/api/receipts");
           if (currentTab === "receipt") renderReceipt();
         } catch (e) {}
       }
-      
+
       async function fetchIssues() {
         try {
           APP.issues = await apiGET("/api/issues");
           if (currentTab === "issue") renderIssue();
         } catch (e) {}
       }
-      
+
       async function fetchStock() {
         try {
           APP.stock = await apiGET("/api/stock/snapshot");
@@ -446,14 +552,14 @@
           updateKPIBox();
         } catch (e) {}
       }
-      
+
       async function fetchFinances() {
         try {
           APP.finances = await apiGET("/api/finances");
           renderFinance();
         } catch (e) {}
       }
-      
+
       async function fetchARAP() {
         try {
           APP.ar = await apiGET("/api/ar");
@@ -461,10 +567,12 @@
           renderARAP();
         } catch (e) {}
       }
-      
+
       async function fetchPL() {
         try {
-          const from = $("#rpFrom") ? $("#rpFrom").value : today().slice(0, 7) + "-01";
+          const from = $("#rpFrom")
+            ? $("#rpFrom").value
+            : today().slice(0, 7) + "-01";
           const to = $("#rpTo") ? $("#rpTo").value : today();
           APP.pl = await apiGET(`/api/stock/profit-loss?from=${from}&to=${to}`);
           APP.kpi = await apiGET(`/api/stock/kpi?from=${from}&to=${to}`);
@@ -474,45 +582,380 @@
         } catch (e) {}
       }
 
+      // ====== MƏHSUL ANBAR API ======
+      async function fetchProducts() {
+        try {
+          APP.products = await apiGET("/api/products");
+          if (currentTab === "products") renderProducts();
+        } catch (e) {}
+      }
+
+      async function fetchProductReceipts() {
+        try {
+          APP.productReceipts = await apiGET("/api/product-receipts");
+          if (currentTab === "product_receipt") renderProductReceipt();
+        } catch (e) {}
+      }
+
+      async function fetchProductTransfers() {
+        try {
+          APP.productTransfers = await apiGET("/api/product-transfers");
+          if (currentTab === "product_transfer") renderProductTransfer();
+        } catch (e) {}
+      }
+
+      async function fetchProductStock() {
+        try {
+          APP.productStock = await apiGET("/api/product-stock/snapshot");
+          renderProductStock();
+        } catch (e) {}
+      }
+
+      // ====== MƏHSUL ANBAR RENDER ======
+      function renderProducts() {
+        const list =
+          APP.products
+            .map(
+              (x) => `
+          <tr>
+            <td>${x.code || ""}</td>
+            <td>${x.name || ""}</td>
+            <td>dm³</td>
+            <td class="right">${fmtN(x.minLevel ?? 0, 3)}</td>
+            <td>${
+              x.isActive === false
+                ? '<span class="badge warn">arxiv</span>'
+                : '<span class="badge ok">aktiv</span>'
+            }</td>
+            <td class="right"><button class="ghost" onclick="toggleProduct('${
+              x.id
+            }')">${
+                x.isActive === false ? "Arxivdən çıxar" : "Arxivlə"
+              }</button></td>
+          </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Məhsul yoxdur</td></tr>';
+
+        $("#view").innerHTML = `
+          <div class="grid cols-2">
+            <div class="card">
+              <div class="section-title">Məhsul bələdçisi</div>
+              <div class="row wrap">
+                <div style="flex:1 1 150px;"><label>Kod</label><input id="pCode" placeholder="PRD-001"></div>
+                <div style="flex:2 1 260px;"><label>Ad</label><input id="pName" placeholder="Hazır məhsul adı"></div>
+                <div style="flex:1 1 120px;"><label>Minimum qalıq (dm³)</label><input id="pMin" type="number" step="0.001" value="0"></div>
+              </div>
+              <div class="row" style="justify-content:flex-end;margin-top:8px;">
+                <button class="primary" onclick="addProduct()">Məhsul əlavə et</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title">Məhsullar</div>
+              <table>
+                <thead><tr><th>Kod</th><th>Ad</th><th>Vahid</th><th class="right">Minimum qalıq</th><th>Status</th><th class="right">Əməliyyatlar</th></tr></thead>
+                <tbody>${list}</tbody>
+              </table>
+            </div>
+          </div>`;
+      }
+
+      async function addProduct() {
+        const code = $("#pCode").value.trim();
+        const name = $("#pName").value.trim();
+        const min = Number($("#pMin").value || 0);
+        if (!code || !name) {
+          alert("Kod və adı daxil edin");
+          return;
+        }
+        try {
+          await apiPOST("/api/products", {
+            code,
+            name,
+            uom: "dm3",
+            minLevel: min,
+            isActive: true,
+          });
+          await fetchProducts();
+          $("#pCode").value = "";
+          $("#pName").value = "";
+          $("#pMin").value = "0";
+        } catch (e) {}
+      }
+
+      async function toggleProduct(id) {
+        try {
+          await apiPATCH(`/api/products/${id}/toggle`);
+          await fetchProducts();
+        } catch (e) {}
+      }
+
+      // --- MƏHSUL QƏBULU ---
+      function renderProductReceipt() {
+        const options = APP.products
+          .filter((x) => x.isActive !== false)
+          .map((x) => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
+          .join("");
+
+        const items =
+          APP.productReceipts
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map((r) => {
+              const prod = APP.products.find((m) => m.id === r.productId) || {};
+              return `<tr>
+              <td>${r.date}</td>
+              <td>${prod.code || ""}</td>
+              <td>${prod.name || ""}</td>
+              <td class="right">${fmtN(r.qtyDm, 3)}</td>
+              <td class="right">${fmtMoney(r.pricePerDm)}</td>
+              <td class="right">${fmtMoney(r.totalCost)}</td>
+              <td>${r.supplier || ""}</td>
+              <td class="tiny">${r.note || ""}</td>
+            </tr>`;
+            })
+            .join("") ||
+          '<tr><td colspan="8" class="tiny">Qəbul yoxdur</td></tr>';
+
+        $("#view").innerHTML = `
+          <div class="grid cols-2">
+            <div class="card">
+              <div class="section-title">Məhsul qəbulu</div>
+              <div class="row wrap">
+                <div style="flex:2 1 260px;"><label>Məhsul</label><select id="prcProd">${options}</select></div>
+                <div style="flex:1 1 120px;"><label>Miqdar (dm³)</label><input id="prcQty" type="number" step="0.001"></div>
+                <div style="flex:1 1 140px;"><label>1 dm³ üçün qiymət (₼)</label><input id="prcPrice" type="number" step="0.01"></div>
+                <div style="flex:1 1 160px;"><label>Tarix</label><input id="prcDate" type="date" value="${today()}"></div>
+                <div style="flex:1 1 200px;"><label>İstehsalçı/Mənbə</label><input id="prcSupplier" placeholder="Zavod"></div>
+              </div>
+              <label>Şərh</label><textarea id="prcNote" placeholder="Partiya/qaimə"></textarea>
+              <div class="row" style="justify-content:space-between;margin-top:8px;">
+                <div class="tiny">Cəm = dm³ × qiymət/dm³</div>
+                <button class="primary" onclick="addProductReceipt()">Qəbulu əlavə et</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title">Son qəbullar</div>
+              <table>
+                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">dm³</th><th class="right">Qiymət/dm³</th><th class="right">Məbləğ</th><th>Mənbə</th><th>Şərh</th></tr></thead>
+                <tbody>${items}</tbody>
+              </table>
+            </div>
+          </div>`;
+      }
+
+      async function addProductReceipt() {
+        const productId = $("#prcProd").value;
+        const qty = Number($("#prcQty").value);
+        const price = Number($("#prcPrice").value);
+        const date = $("#prcDate").value || today();
+        const supplier = $("#prcSupplier").value.trim();
+        const note = $("#prcNote").value.trim();
+
+        if (!productId || qty <= 0 || price < 0) {
+          alert("Məhsul, miqdar (>0) və qiymət (>=0) vacibdir");
+          return;
+        }
+
+        try {
+          await apiPOST("/api/product-receipts", {
+            date,
+            productId,
+            qtyDm: qty,
+            pricePerDm: price,
+            totalCost: qty * price,
+            supplier,
+            note,
+          });
+          await fetchProductReceipts();
+          await fetchProductStock();
+          $("#prcQty").value = "";
+          $("#prcPrice").value = "";
+          $("#prcSupplier").value = "";
+          $("#prcNote").value = "";
+        } catch (e) {}
+      }
+
+      // --- MƏHSUL KÖÇÜRMƏ ---
+      function renderProductTransfer() {
+        const options = APP.products
+          .filter((x) => x.isActive !== false)
+          .map((x) => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
+          .join("");
+
+        const items =
+          APP.productTransfers
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map((i) => {
+              const prod = APP.products.find((m) => m.id === i.productId) || {};
+              return `<tr>
+              <td>${i.date}</td>
+              <td>${prod.code || ""}</td>
+              <td>${prod.name || ""}</td>
+              <td class="right">${fmtN(i.qtyDm, 3)}</td>
+              <td class="right">${fmtMoney(i.avgCostUsed)}</td>
+              <td class="right">${fmtMoney(i.totalCostUsed)}</td>
+              <td>${i.destination || ""}</td>
+              <td class="tiny">${i.note || ""}</td>
+            </tr>`;
+            })
+            .join("") ||
+          '<tr><td colspan="8" class="tiny">Köçürmə yoxdur</td></tr>';
+
+        $("#view").innerHTML = `
+          <div class="grid cols-2">
+            <div class="card">
+              <div class="section-title">Köçürmə / Çıxış</div>
+              <div class="row wrap">
+                <div style="flex:2 1 260px;"><label>Məhsul</label><select id="ptrProd">${options}</select></div>
+                <div style="flex:1 1 120px;"><label>Miqdar (dm³)</label><input id="ptrQty" type="number" step="0.001"></div>
+                <div style="flex:1 1 160px;"><label>Tarix</label><input id="ptrDate" type="date" value="${today()}"></div>
+                <div style="flex:1 1 200px;"><label>Hara/Müştəri</label><input id="ptrDest" placeholder="Müştəri adı"></div>
+              </div>
+              <label>Şərh</label><textarea id="ptrNote" placeholder="Səbəb/göndəriş"></textarea>
+              <div class="row" style="justify-content:space-between;margin-top:8px;">
+                <div class="tiny">Köçürmə xərci = cari orta qiymət × dm³ (server hesablayır)</div>
+                <button class="primary" onclick="addProductTransfer()">Köçürmə əlavə et</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title">Son köçürmələr</div>
+              <table>
+                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">dm³</th><th class="right">Orta qiymət</th><th class="right">Məbləğ</th><th>Hara</th><th>Şərh</th></tr></thead>
+                <tbody>${items}</tbody>
+              </table>
+            </div>
+          </div>`;
+      }
+
+      async function addProductTransfer() {
+        const productId = $("#ptrProd").value;
+        const qty = Number($("#ptrQty").value);
+        const date = $("#ptrDate").value || today();
+        const destination = $("#ptrDest").value.trim();
+        const note = $("#ptrNote").value.trim();
+
+        if (!productId || qty <= 0) {
+          alert("Məhsul və miqdar (>0) vacibdir");
+          return;
+        }
+
+        try {
+          const receipts = APP.productReceipts.filter(
+            (r) => r.productId === productId
+          );
+          const totalQty = receipts.reduce(
+            (a, b) => a + Number(b.qtyDm || 0),
+            0
+          );
+          const totalCost = receipts.reduce(
+            (a, b) => a + Number(b.totalCost || 0),
+            0
+          );
+          const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
+
+          await apiPOST("/api/product-transfers", {
+            date,
+            productId,
+            qtyDm: qty,
+            avgCostUsed: avgCost,
+            totalCostUsed: avgCost * qty,
+            destination,
+            note,
+          });
+          await fetchProductTransfers();
+          await fetchProductStock();
+          $("#ptrQty").value = "";
+          $("#ptrDest").value = "";
+          $("#ptrNote").value = "";
+        } catch (e) {}
+      }
+
+      // --- MƏHSUL ANBARI ---
+      function renderProductStock() {
+        const rows =
+          (APP.productStock || [])
+            .map((r) => {
+              const health = r.onHandDm <= (r.minLevel || 0) ? "warn" : "ok";
+              return `<tr>
+            <td>${r.code || ""}</td>
+            <td>${r.name || ""}</td>
+            <td class="right">${fmtN(r.onHandDm, 3)}</td>
+            <td class="right">${fmtMoney(r.avgCostPerDm)}</td>
+            <td class="right">${fmtMoney(r.inventoryValue)}</td>
+            <td><span class="badge ${health}">${
+                r.status === "low" || health === "warn" ? "LOW" : "OK"
+              }</span></td>
+          </tr>`;
+            })
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Anbar məlumatı yoxdur</td></tr>';
+
+        $("#view").innerHTML = `
+          <div class="card">
+            <div class="section-title">Məhsul anbarı qalıqları (dm³)</div>
+            <table>
+              <thead><tr><th>Kod</th><th>Məhsul</th><th class="right">Varlıqdakı (dm³)</th><th class="right">Orta qiymət (₼/dm³)</th><th class="right">İnventar dəyəri</th><th>Status</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
+      }
+
       // ====== RENDER / UI funksiyaları ======
       function updateKPIBox() {
-        let onHandKg = 0, inv = 0;
-        
+        let onHandKg = 0,
+          inv = 0;
+
         if (Array.isArray(APP.stock) && APP.stock.length) {
-          APP.stock.forEach(s => { 
-            onHandKg += Number(s.onHandKg || 0); 
-            inv += Number(s.inventoryValue || 0); 
+          APP.stock.forEach((s) => {
+            onHandKg += Number(s.onHandKg || 0);
+            inv += Number(s.inventoryValue || 0);
           });
         }
-        
+
         $("#kpiOnHandKg").textContent = fmtN(onHandKg, 3);
         $("#kpiInvValue").textContent = fmtMoney(inv);
-        
+
         if (APP.kpi) {
           $("#kpiRevenue").textContent = fmtMoney(APP.kpi.revenue || 0);
           $("#kpiNet").textContent = fmtMoney(APP.kpi.netProfit || 0);
           const badge = $("#kpiNetBadge");
-          if ((APP.kpi.netProfit || 0) >= 0) { 
-            badge.textContent = "OK"; 
-            badge.className = "badge ok"; 
-          } else { 
-            badge.textContent = "NEG"; 
-            badge.className = "badge bad"; 
+          if ((APP.kpi.netProfit || 0) >= 0) {
+            badge.textContent = "OK";
+            badge.className = "badge ok";
+          } else {
+            badge.textContent = "NEG";
+            badge.className = "badge bad";
           }
         }
       }
 
       // --- MATERIALS ---
       function renderMaterials() {
-        const list = APP.materials.map(x => `
+        const list =
+          APP.materials
+            .map(
+              (x) => `
           <tr>
             <td>${x.code || ""}</td>
             <td>${x.name || ""}</td>
             <td>kq</td>
             <td class="right">${fmtN(x.minLevel ?? 0, 3)}</td>
-            <td>${x.isActive === false ? '<span class="badge warn">arxiv</span>' : '<span class="badge ok">aktiv</span>'}</td>
-            <td class="right"><button class="ghost" onclick="toggleMat('${x.id}')">${x.isActive === false ? "Arxivdən çıxar" : "Arxivlə"}</button></td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Material yoxdur</td></tr>';
+            <td>${
+              x.isActive === false
+                ? '<span class="badge warn">arxiv</span>'
+                : '<span class="badge ok">aktiv</span>'
+            }</td>
+            <td class="right"><button class="ghost" onclick="toggleMat('${
+              x.id
+            }')">${
+                x.isActive === false ? "Arxivdən çıxar" : "Arxivlə"
+              }</button></td>
+          </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Material yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -541,18 +984,21 @@
         const code = $("#mCode").value.trim();
         const name = $("#mName").value.trim();
         const min = Number($("#mMin").value || 0);
-        if (!code || !name) { alert("Kod və adı daxil edin"); return; }
+        if (!code || !name) {
+          alert("Kod və adı daxil edin");
+          return;
+        }
         try {
-          await apiPOST("/api/materials", { 
-            code, 
-            name, 
-            uom: "kg", 
-            minLevel: min, 
-            isActive: true 
+          await apiPOST("/api/materials", {
+            code,
+            name,
+            uom: "kg",
+            minLevel: min,
+            isActive: true,
           });
           await fetchMaterials();
-          $("#mCode").value = ""; 
-          $("#mName").value = ""; 
+          $("#mCode").value = "";
+          $("#mName").value = "";
           $("#mMin").value = "0";
         } catch (e) {}
       }
@@ -566,13 +1012,19 @@
 
       // --- RECEIPTS ---
       function renderReceipt() {
-        const options = APP.materials.filter(x => x.isActive !== false)
-          .map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`).join("");
-          
-        const items = APP.receipts.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(r => {
-            const mat = APP.materials.find(m => m.id === r.materialId) || {};
-            return `<tr>
+        const options = APP.materials
+          .filter((x) => x.isActive !== false)
+          .map((x) => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
+          .join("");
+
+        const items =
+          APP.receipts
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map((r) => {
+              const mat =
+                APP.materials.find((m) => m.id === r.materialId) || {};
+              return `<tr>
               <td>${r.date}</td>
               <td>${mat.code || ""}</td>
               <td>${mat.name || ""}</td>
@@ -582,7 +1034,9 @@
               <td>${r.supplier || ""}</td>
               <td class="tiny">${r.note || ""}</td>
             </tr>`;
-          }).join("") || '<tr><td colspan="8" class="tiny">Qəbul yoxdur</td></tr>';
+            })
+            .join("") ||
+          '<tr><td colspan="8" class="tiny">Qəbul yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -618,21 +1072,21 @@
         const date = $("#rcDate").value || today();
         const supplier = $("#rcSupplier").value.trim();
         const note = $("#rcNote").value.trim();
-        
-        if (!materialId || qty <= 0 || price < 0) { 
-          alert("Material, miqdar (>0) və qiymət (>=0) vacibdir"); 
-          return; 
+
+        if (!materialId || qty <= 0 || price < 0) {
+          alert("Material, miqdar (>0) və qiymət (>=0) vacibdir");
+          return;
         }
-        
+
         try {
-          await apiPOST("/api/receipts", { 
-            date, 
-            materialId, 
-            qtyKg: qty, 
-            pricePerKg: price, 
-            totalCost: qty * price, 
-            supplier, 
-            note 
+          await apiPOST("/api/receipts", {
+            date,
+            materialId,
+            qtyKg: qty,
+            pricePerKg: price,
+            totalCost: qty * price,
+            supplier,
+            note,
           });
           await fetchReceipts();
           await fetchStock();
@@ -645,13 +1099,19 @@
 
       // --- ISSUES ---
       function renderIssue() {
-        const options = APP.materials.filter(x => x.isActive !== false)
-          .map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`).join("");
-          
-        const items = APP.issues.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(i => {
-            const mat = APP.materials.find(m => m.id === i.materialId) || {};
-            return `<tr>
+        const options = APP.materials
+          .filter((x) => x.isActive !== false)
+          .map((x) => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
+          .join("");
+
+        const items =
+          APP.issues
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map((i) => {
+              const mat =
+                APP.materials.find((m) => m.id === i.materialId) || {};
+              return `<tr>
               <td>${i.date}</td>
               <td>${mat.code || ""}</td>
               <td>${mat.name || ""}</td>
@@ -661,7 +1121,9 @@
               <td>${i.jobRef || ""}</td>
               <td class="tiny">${i.note || ""}</td>
             </tr>`;
-          }).join("") || '<tr><td colspan="8" class="tiny">Silmə yoxdur</td></tr>';
+            })
+            .join("") ||
+          '<tr><td colspan="8" class="tiny">Silmə yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -695,28 +1157,36 @@
         const date = $("#isDate").value || today();
         const jobRef = $("#isJob").value.trim();
         const note = $("#isNote").value.trim();
-        
-        if (!materialId || qty <= 0) { 
-          alert("Material və miqdar (>0) vacibdir"); 
-          return; 
+
+        if (!materialId || qty <= 0) {
+          alert("Material və miqdar (>0) vacibdir");
+          return;
         }
-        
+
         try {
           // Backend avgCostUsed-i hesablayacaq
           // Əgər backend gözləmirsə, client tərəfdən hesabla:
-          const receipts = APP.receipts.filter(r => r.materialId === materialId);
-          const totalQty = receipts.reduce((a,b) => a + Number(b.qtyKg || 0), 0);
-          const totalCost = receipts.reduce((a,b) => a + Number(b.totalCost || 0), 0);
+          const receipts = APP.receipts.filter(
+            (r) => r.materialId === materialId
+          );
+          const totalQty = receipts.reduce(
+            (a, b) => a + Number(b.qtyKg || 0),
+            0
+          );
+          const totalCost = receipts.reduce(
+            (a, b) => a + Number(b.totalCost || 0),
+            0
+          );
           const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
-          
-          await apiPOST("/api/issues", { 
-            date, 
-            materialId, 
+
+          await apiPOST("/api/issues", {
+            date,
+            materialId,
             qtyKg: qty,
             avgCostUsed: avgCost,
             totalCostUsed: avgCost * qty,
-            jobRef, 
-            note 
+            jobRef,
+            note,
           });
           await fetchIssues();
           await fetchStock();
@@ -728,17 +1198,23 @@
 
       // --- STOCK ---
       function renderStock() {
-        const rows = (APP.stock || []).map(r => {
-          const health = r.onHandKg <= (r.minLevel || 0) ? "warn" : "ok";
-          return `<tr>
+        const rows =
+          (APP.stock || [])
+            .map((r) => {
+              const health = r.onHandKg <= (r.minLevel || 0) ? "warn" : "ok";
+              return `<tr>
             <td>${r.code || ""}</td>
             <td>${r.name || ""}</td>
             <td class="right">${fmtN(r.onHandKg, 3)}</td>
             <td class="right">${fmtMoney(r.avgCostPerKg)}</td>
             <td class="right">${fmtMoney(r.inventoryValue)}</td>
-            <td><span class="badge ${health}">${r.status === "low" || health === "warn" ? "LOW" : "OK"}</span></td>
+            <td><span class="badge ${health}">${
+                r.status === "low" || health === "warn" ? "LOW" : "OK"
+              }</span></td>
           </tr>`;
-        }).join("") || '<tr><td colspan="6" class="tiny">Anbar məlumatı yoxdur</td></tr>';
+            })
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Anbar məlumatı yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="card">
@@ -752,16 +1228,23 @@
 
       // --- FINANCE ---
       function renderFinance() {
-        const list = (APP.finances || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(f => `<tr>
+        const list =
+          (APP.finances || [])
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map(
+              (f) => `<tr>
             <td>${f.date}</td>
             <td>${f.type === "income" ? "Gəlir" : "Xərc"}</td>
-            <td>${f.category||""}</td>
-            <td>${f.counterparty||""}</td>
-            <td class="right">${fmtMoney(f.amountAzn||0)}</td>
-            <td class="tiny">${f.note||""}</td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Qeyd yoxdur</td></tr>';
-          
+            <td>${f.category || ""}</td>
+            <td>${f.counterparty || ""}</td>
+            <td class="right">${fmtMoney(f.amountAzn || 0)}</td>
+            <td class="tiny">${f.note || ""}</td>
+          </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Qeyd yoxdur</td></tr>';
+
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
@@ -793,20 +1276,20 @@
         const date = $("#fnDate").value || today();
         const counterparty = $("#fnCp").value.trim();
         const note = $("#fnNote").value.trim();
-        
-        if (!category || amount < 0) { 
-          alert("Kateqoriya və məbləğ daxil edin"); 
-          return; 
+
+        if (!category || amount < 0) {
+          alert("Kateqoriya və məbləğ daxil edin");
+          return;
         }
-        
+
         try {
-          await apiPOST("/api/finances", { 
-            date, 
-            type, 
-            category, 
-            amountAzn: amount, 
-            counterparty, 
-            note 
+          await apiPOST("/api/finances", {
+            date,
+            type,
+            category,
+            amountAzn: amount,
+            counterparty,
+            note,
           });
           await fetchFinances();
           await fetchPL();
@@ -819,34 +1302,55 @@
 
       // --- AR / AP ---
       function arRemaining(entry) {
-        const paid = (entry.payments || []).reduce((a,b) => a + Number(b.amountAzn || 0), 0);
+        const paid = (entry.payments || []).reduce(
+          (a, b) => a + Number(b.amountAzn || 0),
+          0
+        );
         return (entry.amountAzn || 0) - paid;
       }
-      
-      function apRemaining(entry) { 
-        return arRemaining(entry); 
+
+      function apRemaining(entry) {
+        return arRemaining(entry);
       }
 
       function renderARAP() {
-        const arRows = (APP.ar || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(e => `<tr>
+        const arRows =
+          (APP.ar || [])
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map(
+              (e) => `<tr>
             <td>${e.date}</td>
-            <td>${e.counterparty||""}</td>
-            <td class="right">${fmtMoney(e.amountAzn||0)}</td>
+            <td>${e.counterparty || ""}</td>
+            <td class="right">${fmtMoney(e.amountAzn || 0)}</td>
             <td class="right">${fmtMoney(arRemaining(e))}</td>
-            <td>${e.status||""}</td>
-            <td class="right"><button class="ghost" onclick="addARPayPrompt('${e.id}')">Ödəniş</button></td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Debitor yoxdur</td></tr>';
+            <td>${e.status || ""}</td>
+            <td class="right"><button class="ghost" onclick="addARPayPrompt('${
+              e.id
+            }')">Ödəniş</button></td>
+          </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Debitor yoxdur</td></tr>';
 
-        const apRows = (APP.ap || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(e => `<tr>
+        const apRows =
+          (APP.ap || [])
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map(
+              (e) => `<tr>
             <td>${e.date}</td>
-            <td>${e.counterparty||""}</td>
-            <td class="right">${fmtMoney(e.amountAzn||0)}</td>
+            <td>${e.counterparty || ""}</td>
+            <td class="right">${fmtMoney(e.amountAzn || 0)}</td>
             <td class="right">${fmtMoney(apRemaining(e))}</td>
-            <td>${e.status||""}</td>
-            <td class="right"><button class="ghost" onclick="addAPPayPrompt('${e.id}')">Ödəniş</button></td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Kreditor yoxdur</td></tr>';
+            <td>${e.status || ""}</td>
+            <td class="right"><button class="ghost" onclick="addAPPayPrompt('${
+              e.id
+            }')">Ödəniş</button></td>
+          </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Kreditor yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -892,20 +1396,20 @@
         const amount = Number($("#arAmt").value);
         const status = $("#arStatus").value;
         const note = $("#arNote").value.trim();
-        
-        if (!counterparty || amount <= 0) { 
-          alert("Kontragent və məbləğ (>0) vacibdir"); 
-          return; 
+
+        if (!counterparty || amount <= 0) {
+          alert("Kontragent və məbləğ (>0) vacibdir");
+          return;
         }
-        
+
         try {
-          await apiPOST("/api/ar", { 
-            counterparty, 
-            date, 
-            amountAzn: amount, 
-            status, 
-            payments: [], 
-            note 
+          await apiPOST("/api/ar", {
+            counterparty,
+            date,
+            amountAzn: amount,
+            status,
+            payments: [],
+            note,
           });
           await fetchARAP();
           $("#arCp").value = "";
@@ -913,27 +1417,27 @@
           $("#arNote").value = "";
         } catch (e) {}
       }
-      
+
       async function addAP() {
         const counterparty = $("#apCp").value.trim();
         const date = $("#apDate").value || today();
         const amount = Number($("#apAmt").value);
         const status = $("#apStatus").value;
         const note = $("#apNote").value.trim();
-        
-        if (!counterparty || amount <= 0) { 
-          alert("Kontragent və məbləğ (>0) vacibdir"); 
-          return; 
+
+        if (!counterparty || amount <= 0) {
+          alert("Kontragent və məbləğ (>0) vacibdir");
+          return;
         }
-        
+
         try {
-          await apiPOST("/api/ap", { 
-            counterparty, 
-            date, 
-            amountAzn: amount, 
-            status, 
-            payments: [], 
-            note 
+          await apiPOST("/api/ap", {
+            counterparty,
+            date,
+            amountAzn: amount,
+            status,
+            payments: [],
+            note,
           });
           await fetchARAP();
           $("#apCp").value = "";
@@ -943,34 +1447,34 @@
       }
 
       async function addARPayPrompt(id) {
-        const e = APP.ar.find(x => x.id === id);
+        const e = APP.ar.find((x) => x.id === id);
         if (!e) return;
         const amt = prompt("Ödəniş məbləği (₼)");
         if (amt === null) return;
         const a = Number(amt);
         if (!(a > 0)) return alert("Yanlış məbləğ");
-        
+
         try {
-          await apiPOST(`/api/ar/${id}/payments`, { 
-            date: today(), 
-            amountAzn: a 
+          await apiPOST(`/api/ar/${id}/payments`, {
+            date: today(),
+            amountAzn: a,
           });
           await fetchARAP();
         } catch (e) {}
       }
-      
+
       async function addAPPayPrompt(id) {
-        const e = APP.ap.find(x => x.id === id);
+        const e = APP.ap.find((x) => x.id === id);
         if (!e) return;
         const amt = prompt("Ödəniş məbləği (₼)");
         if (amt === null) return;
         const a = Number(amt);
         if (!(a > 0)) return alert("Yanlış məbləğ");
-        
+
         try {
-          await apiPOST(`/api/ap/${id}/payments`, { 
-            date: today(), 
-            amountAzn: a 
+          await apiPOST(`/api/ap/${id}/payments`, {
+            date: today(),
+            amountAzn: a,
           });
           await fetchARAP();
         } catch (e) {}
@@ -981,7 +1485,7 @@
         const from = today().slice(0, 7) + "-01";
         const to = today();
         const p = APP.pl || {};
-        
+
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
@@ -994,11 +1498,21 @@
               <div id="plBox" style="margin-top:8px;">
                 <table>
                   <tbody>
-                    <tr><td>Gəlir</td><td class="right">${fmtMoney(p.revenue || 0)}</td></tr>
-                    <tr><td>Satılan malın maya dəyəri (COGS)</td><td class="right">${fmtMoney(p.cogs || 0)}</td></tr>
-                    <tr><th>Brüt mənfəət</th><th class="right">${fmtMoney(p.grossProfit || 0)}</th></tr>
-                    <tr><td>Digər xərclər</td><td class="right">${fmtMoney(p.expenses || 0)}</td></tr>
-                    <tr><th>Xalis mənfəət</th><th class="right">${fmtMoney(p.netProfit || 0)}</th></tr>
+                    <tr><td>Gəlir</td><td class="right">${fmtMoney(
+                      p.revenue || 0
+                    )}</td></tr>
+                    <tr><td>Satılan malın maya dəyəri (COGS)</td><td class="right">${fmtMoney(
+                      p.cogs || 0
+                    )}</td></tr>
+                    <tr><th>Brüt mənfəət</th><th class="right">${fmtMoney(
+                      p.grossProfit || 0
+                    )}</th></tr>
+                    <tr><td>Digər xərclər</td><td class="right">${fmtMoney(
+                      p.expenses || 0
+                    )}</td></tr>
+                    <tr><th>Xalis mənfəət</th><th class="right">${fmtMoney(
+                      p.netProfit || 0
+                    )}</th></tr>
                   </tbody>
                 </table>
               </div>
@@ -1012,8 +1526,10 @@
       }
 
       function renderMovement() {
-        const rows = (APP.movements || []).map(m => {
-          return `<tr>
+        const rows =
+          (APP.movements || [])
+            .map((m) => {
+              return `<tr>
             <td>${m.code}</td>
             <td>${m.name}</td>
             <td class="right">${fmtN(m.inQty, 3)}</td>
@@ -1021,8 +1537,10 @@
             <td class="right">${fmtN(m.outQty, 3)}</td>
             <td class="right">${fmtMoney(m.outSum)}</td>
           </tr>`;
-        }).join("") || '<tr><td colspan="6" class="tiny">Heç bir məlumat yoxdur</td></tr>';
-        
+            })
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Heç bir məlumat yoxdur</td></tr>';
+
         $("#mvBox").innerHTML = `
           <table>
             <thead>
@@ -1045,6 +1563,10 @@
         else if (currentTab === "receipt") renderReceipt();
         else if (currentTab === "issue") renderIssue();
         else if (currentTab === "stock") renderStock();
+        else if (currentTab === "products") renderProducts();
+        else if (currentTab === "product_receipt") renderProductReceipt();
+        else if (currentTab === "product_transfer") renderProductTransfer();
+        else if (currentTab === "product_stock") renderProductStock();
         else if (currentTab === "finance") renderFinance();
         else if (currentTab === "arap") renderARAP();
         else if (currentTab === "reports") renderReports();
@@ -1066,7 +1588,6 @@
         renderView();
         await refreshAll();
       });
-
     </script>
   </body>
 </html>
