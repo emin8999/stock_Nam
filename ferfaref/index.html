@@ -25,11 +25,22 @@
         background: var(--bg);
         color: var(--text);
         font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;
+        overflow-x: hidden;
       }
       .app {
         max-width: 1260px;
         margin: 0 auto;
         padding: 20px;
+      }
+      @media (max-width: 700px) {
+        .app {
+          padding: 12px;
+        }
+      }
+      @media (max-width: 400px) {
+        .app {
+          padding: 8px;
+        }
       }
       h1 {
         margin: 0 0 8px;
@@ -39,10 +50,41 @@
         color: var(--muted);
         font-size: 12px;
       }
+      @media (max-width: 700px) {
+        h1 {
+          font-size: 18px;
+        }
+        .sub {
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 400px) {
+        h1 {
+          font-size: 16px;
+          margin: 0 0 6px;
+        }
+        .sub {
+          font-size: 10px;
+          line-height: 1.4;
+        }
+      }
       .tab-container {
         display: flex;
+        flex-direction: column;
         gap: 16px;
         margin: 16px 0;
+      }
+      @media (max-width: 700px) {
+        .tab-container {
+          gap: 12px;
+          margin: 12px 0;
+        }
+      }
+      @media (max-width: 400px) {
+        .tab-container {
+          gap: 10px;
+          margin: 10px 0;
+        }
       }
       .tab-group {
         display: flex;
@@ -115,16 +157,40 @@
       .cols-4 {
         grid-template-columns: repeat(4, 1fr);
       }
+
+      /* Tablet - 700px-dən 1024px-ə qədər */
       @media (max-width: 1024px) {
         .cols-4 {
           grid-template-columns: repeat(2, 1fr);
         }
+        .cols-3 {
+          grid-template-columns: repeat(2, 1fr);
+        }
       }
-      @media (max-width: 720px) {
+
+      /* Kiçik tablet - 400px-dən 700px-ə qədər */
+      @media (max-width: 700px) {
+        .cols-4,
+        .cols-3 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .cols-2 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .grid {
+          gap: 8px;
+        }
+      }
+
+      /* Mobil - 300px-dən 400px-ə qədər */
+      @media (max-width: 399px) {
         .cols-4,
         .cols-3,
         .cols-2 {
           grid-template-columns: 1fr;
+        }
+        .grid {
+          gap: 8px;
         }
       }
       .card {
@@ -132,15 +198,51 @@
         border: 1px solid var(--border);
         border-radius: 16px;
         padding: 14px;
+        overflow: hidden;
+      }
+      @media (max-width: 700px) {
+        .card {
+          padding: 12px;
+          border-radius: 12px;
+        }
+      }
+      @media (max-width: 400px) {
+        .card {
+          padding: 10px;
+          border-radius: 10px;
+        }
+        .val {
+          font-size: 18px !important;
+          font-weight: 800;
+        }
       }
       .kpi {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 8px;
       }
       .kpi .val {
         font-size: 22px;
         font-weight: 800;
+      }
+      @media (max-width: 700px) {
+        .kpi .val {
+          font-size: 18px;
+        }
+        .kpi .muted {
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 400px) {
+        .kpi {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+        }
+        .kpi .val {
+          font-size: 20px;
+        }
       }
       .muted {
         color: var(--muted);
@@ -148,6 +250,16 @@
       .tiny {
         font-size: 11px;
         color: var(--muted);
+      }
+      @media (max-width: 700px) {
+        .tiny {
+          font-size: 10px;
+        }
+      }
+      @media (max-width: 400px) {
+        .tiny {
+          font-size: 9px;
+        }
       }
       .row {
         display: flex;
@@ -157,11 +269,40 @@
       .row.wrap {
         flex-wrap: wrap;
       }
+      @media (max-width: 700px) {
+        .row {
+          gap: 8px;
+        }
+        .row.wrap > div {
+          min-width: 140px;
+        }
+      }
+      @media (max-width: 400px) {
+        .row {
+          gap: 6px;
+        }
+        .row.wrap > div {
+          min-width: 100%;
+          flex: 1 1 100% !important;
+        }
+      }
       label {
         font-size: 12px;
         color: var(--muted);
         display: block;
         margin-bottom: 6px;
+      }
+      @media (max-width: 700px) {
+        label {
+          font-size: 11px;
+          margin-bottom: 4px;
+        }
+      }
+      @media (max-width: 400px) {
+        label {
+          font-size: 10px;
+          margin-bottom: 3px;
+        }
       }
       input,
       select,
@@ -176,6 +317,16 @@
       textarea {
         min-height: 72px;
       }
+      @media (max-width: 700px) {
+        textarea {
+          min-height: 60px;
+        }
+      }
+      @media (max-width: 400px) {
+        textarea {
+          min-height: 50px;
+        }
+      }
       button {
         padding: 10px 14px;
         border-radius: 10px;
@@ -183,6 +334,31 @@
         background: #0b1220;
         color: var(--text);
         cursor: pointer;
+        font-size: 14px;
+      }
+      @media (max-width: 700px) {
+        input,
+        select,
+        textarea {
+          padding: 9px 10px;
+          font-size: 14px;
+        }
+        button {
+          padding: 9px 12px;
+          font-size: 13px;
+        }
+      }
+      @media (max-width: 400px) {
+        input,
+        select,
+        textarea {
+          padding: 8px;
+          font-size: 13px;
+        }
+        button {
+          padding: 8px 10px;
+          font-size: 12px;
+        }
       }
       button.primary {
         background: linear-gradient(135deg, #2563eb, #06b6d4);
@@ -195,9 +371,15 @@
       .danger {
         color: #fecaca;
       }
+      .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -4px;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
+        min-width: 550px;
       }
       th,
       td {
@@ -205,10 +387,47 @@
         padding: 10px;
         border-bottom: 1px dashed var(--border);
         font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+      }
+      th:first-child,
+      td:first-child {
+        position: sticky;
+        left: 0;
+        background: var(--card);
+        z-index: 1;
       }
       th {
         color: var(--muted);
         font-weight: 700;
+      }
+      @media (max-width: 700px) {
+        th,
+        td {
+          padding: 7px 6px;
+          font-size: 11px;
+        }
+        table {
+          min-width: 450px;
+        }
+        .table-wrapper {
+          margin: 0 -2px;
+        }
+      }
+      @media (max-width: 400px) {
+        th,
+        td {
+          padding: 5px 4px;
+          font-size: 10px;
+        }
+        table {
+          min-width: 380px;
+        }
+        .table-wrapper {
+          margin: 0 -1px;
+        }
       }
       .right {
         text-align: right;
@@ -219,6 +438,19 @@
         border: 1px solid var(--border);
         background: var(--pill);
         font-size: 12px;
+        white-space: nowrap;
+      }
+      @media (max-width: 700px) {
+        .badge {
+          padding: 2px 6px;
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 400px) {
+        .badge {
+          padding: 1px 5px;
+          font-size: 10px;
+        }
       }
       .badge.ok {
         color: var(--ok);
@@ -259,10 +491,28 @@
         color: var(--muted);
         font-size: 12px;
       }
+      @media (max-width: 400px) {
+        .foot {
+          font-size: 10px;
+          margin-top: 10px;
+        }
+      }
       .section-title {
         font-size: 16px;
         font-weight: 800;
         margin-bottom: 10px;
+      }
+      @media (max-width: 700px) {
+        .section-title {
+          font-size: 14px;
+          margin-bottom: 8px;
+        }
+      }
+      @media (max-width: 400px) {
+        .section-title {
+          font-size: 13px;
+          margin-bottom: 6px;
+        }
       }
       .loader {
         width: 14px;
@@ -330,7 +580,6 @@
     </div>
 
     <script>
-      // ====== KONFİGURASİYA ======
       const BASE = "http://116.203.51.133:8085/stock";
       const API_HEADERS = {
         "Content-Type": "application/json",
@@ -445,7 +694,6 @@
         }
       }
 
-      // ====== API helpers ======
       async function apiGET(path) {
         try {
           const res = await fetch(BASE + path, {
@@ -520,7 +768,6 @@
         }
       }
 
-      // ====== FETCH data from server ======
       async function fetchMaterials() {
         try {
           APP.materials = await apiGET("/api/materials");
@@ -582,7 +829,6 @@
         } catch (e) {}
       }
 
-      // ====== MƏHSUL ANBAR API ======
       async function fetchProducts() {
         try {
           APP.products = await apiGET("/api/products");
@@ -611,7 +857,6 @@
         } catch (e) {}
       }
 
-      // ====== MƏHSUL ANBAR RENDER ======
       function renderProducts() {
         const list =
           APP.products
@@ -652,10 +897,12 @@
             </div>
             <div class="card">
               <div class="section-title">Məhsullar</div>
-              <table>
-                <thead><tr><th>Kod</th><th>Ad</th><th>Vahid</th><th class="right">Minimum qalıq</th><th>Status</th><th class="right">Əməliyyatlar</th></tr></thead>
-                <tbody>${list}</tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <thead><tr><th>Kod</th><th>Ad</th><th>Vahid</th><th class="right">Minimum qalıq</th><th>Status</th><th class="right">Əməliyyatlar</th></tr></thead>
+                  <tbody>${list}</tbody>
+                </table>
+              </div>
             </div>
           </div>`;
       }
@@ -736,10 +983,12 @@
             </div>
             <div class="card">
               <div class="section-title">Son qəbullar</div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">dm³</th><th class="right">Qiymət/dm³</th><th class="right">Məbləğ</th><th>Mənbə</th><th>Şərh</th></tr></thead>
-                <tbody>${items}</tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">dm³</th><th class="right">Qiymət/dm³</th><th class="right">Məbləğ</th><th>Mənbə</th><th>Şərh</th></tr></thead>
+                  <tbody>${items}</tbody>
+                </table>
+              </div>
             </div>
           </div>`;
       }
@@ -821,10 +1070,12 @@
             </div>
             <div class="card">
               <div class="section-title">Son köçürmələr</div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">dm³</th><th class="right">Orta qiymət</th><th class="right">Məbləğ</th><th>Hara</th><th>Şərh</th></tr></thead>
-                <tbody>${items}</tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">dm³</th><th class="right">Orta qiymət</th><th class="right">Məbləğ</th><th>Hara</th><th>Şərh</th></tr></thead>
+                  <tbody>${items}</tbody>
+                </table>
+              </div>
             </div>
           </div>`;
       }
@@ -895,14 +1146,15 @@
         $("#view").innerHTML = `
           <div class="card">
             <div class="section-title">Məhsul anbarı qalıqları (dm³)</div>
-            <table>
-              <thead><tr><th>Kod</th><th>Məhsul</th><th class="right">Varlıqdakı (dm³)</th><th class="right">Orta qiymət (₼/dm³)</th><th class="right">İnventar dəyəri</th><th>Status</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>Kod</th><th>Məhsul</th><th class="right">Varlıqdakı (dm³)</th><th class="right">Orta qiymət (₼/dm³)</th><th class="right">İnventar dəyəri</th><th>Status</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
           </div>`;
       }
 
-      // ====== RENDER / UI funksiyaları ======
       function updateKPIBox() {
         let onHandKg = 0,
           inv = 0;
@@ -972,10 +1224,12 @@
             </div>
             <div class="card">
               <div class="section-title">Materiallar</div>
-              <table>
-                <thead><tr><th>Kod</th><th>Ad</th><th>Vahid</th><th class="right">Minimum qalıq</th><th>Status</th><th class="right">Əməliyyatlar</th></tr></thead>
-                <tbody>${list}</tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <thead><tr><th>Kod</th><th>Ad</th><th>Vahid</th><th class="right">Minimum qalıq</th><th>Status</th><th class="right">Əməliyyatlar</th></tr></thead>
+                  <tbody>${list}</tbody>
+                </table>
+              </div>
             </div>
           </div>`;
       }
@@ -1057,10 +1311,12 @@
             </div>
             <div class="card">
               <div class="section-title">Son qəbullar</div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kod</th><th>Material</th><th class="right">kq</th><th class="right">Qiymət/kq</th><th class="right">Məbləğ</th><th>Təchizatçı</th><th>Şərh</th></tr></thead>
-                <tbody>${items}</tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <thead><tr><th>Tarix</th><th>Kod</th><th>Material</th><th class="right">kq</th><th class="right">Qiymət/kq</th><th class="right">Məbləğ</th><th>Təchizatçı</th><th>Şərh</th></tr></thead>
+                  <tbody>${items}</tbody>
+                </table>
+              </div>
             </div>
           </div>`;
       }
@@ -1143,10 +1399,12 @@
             </div>
             <div class="card">
               <div class="section-title">Son silmələr</div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kod</th><th>Material</th><th class="right">kq</th><th class="right">Orta qiymət</th><th class="right">Məbləğ</th><th>İş</th><th>Şərh</th></tr></thead>
-                <tbody>${items}</tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <thead><tr><th>Tarix</th><th>Kod</th><th>Material</th><th class="right">kq</th><th class="right">Orta qiymət</th><th class="right">Məbləğ</th><th>İş</th><th>Şərh</th></tr></thead>
+                  <tbody>${items}</tbody>
+                </table>
+              </div>
             </div>
           </div>`;
       }
@@ -1219,10 +1477,12 @@
         $("#view").innerHTML = `
           <div class="card">
             <div class="section-title">Anbar qalıqları (kq)</div>
-            <table>
-              <thead><tr><th>Kod</th><th>Material</th><th class="right">Varlıqdakı (kq)</th><th class="right">Orta qiymət (₼/kq)</th><th class="right">İnventar dəyəri</th><th>Status</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>Kod</th><th>Material</th><th class="right">Varlıqdakı (kq)</th><th class="right">Orta qiymət (₼/kq)</th><th class="right">İnventar dəyəri</th><th>Status</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
           </div>`;
       }
 
@@ -1261,10 +1521,12 @@
             </div>
             <div class="card">
               <div class="section-title">Qeydlər</div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Tip</th><th>Kateqoriya</th><th>Kontragent</th><th class="right">Məbləğ</th><th>Qeyd</th></tr></thead>
-                <tbody>${list}</tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <thead><tr><th>Tarix</th><th>Tip</th><th>Kateqoriya</th><th>Kontragent</th><th class="right">Məbləğ</th><th>Qeyd</th></tr></thead>
+                  <tbody>${list}</tbody>
+                </table>
+              </div>
             </div>
           </div>`;
       }
@@ -1365,10 +1627,12 @@
               <label>Qeyd</label><textarea id="arNote"></textarea>
               <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addAR()">Əlavə et</button></div>
               <div class="divider"></div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kontragent</th><th class="right">Məbləğ</th><th class="right">Qalıq</th><th>Status</th><th class="right">Əməliyyat</th></tr></thead>
-                <tbody>${arRows}</tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <thead><tr><th>Tarix</th><th>Kontragent</th><th class="right">Məbləğ</th><th class="right">Qalıq</th><th>Status</th><th class="right">Əməliyyat</th></tr></thead>
+                  <tbody>${arRows}</tbody>
+                </table>
+              </div>
             </div>
 
             <div class="card">
@@ -1382,10 +1646,12 @@
               <label>Qeyd</label><textarea id="apNote"></textarea>
               <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addAP()">Əlavə et</button></div>
               <div class="divider"></div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kontragent</th><th class="right">Məbləğ</th><th class="right">Qalıq</th><th>Status</th><th class="right">Əməliyyat</th></tr></thead>
-                <tbody>${apRows}</tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <thead><tr><th>Tarix</th><th>Kontragent</th><th class="right">Məbləğ</th><th class="right">Qalıq</th><th>Status</th><th class="right">Əməliyyat</th></tr></thead>
+                  <tbody>${apRows}</tbody>
+                </table>
+              </div>
             </div>
           </div>`;
       }
@@ -1496,25 +1762,27 @@
                 <div style="align-self:flex-end;"><button class="primary" onclick="fetchPL()">Göstər</button></div>
               </div>
               <div id="plBox" style="margin-top:8px;">
-                <table>
-                  <tbody>
-                    <tr><td>Gəlir</td><td class="right">${fmtMoney(
-                      p.revenue || 0
-                    )}</td></tr>
-                    <tr><td>Satılan malın maya dəyəri (COGS)</td><td class="right">${fmtMoney(
-                      p.cogs || 0
-                    )}</td></tr>
-                    <tr><th>Brüt mənfəət</th><th class="right">${fmtMoney(
-                      p.grossProfit || 0
-                    )}</th></tr>
-                    <tr><td>Digər xərclər</td><td class="right">${fmtMoney(
-                      p.expenses || 0
-                    )}</td></tr>
-                    <tr><th>Xalis mənfəət</th><th class="right">${fmtMoney(
-                      p.netProfit || 0
-                    )}</th></tr>
-                  </tbody>
-                </table>
+                <div class="table-wrapper">
+                  <table>
+                    <tbody>
+                      <tr><td>Gəlir</td><td class="right">${fmtMoney(
+                        p.revenue || 0
+                      )}</td></tr>
+                      <tr><td>Satılan malın maya dəyəri (COGS)</td><td class="right">${fmtMoney(
+                        p.cogs || 0
+                      )}</td></tr>
+                      <tr><th>Brüt mənfəət</th><th class="right">${fmtMoney(
+                        p.grossProfit || 0
+                      )}</th></tr>
+                      <tr><td>Digər xərclər</td><td class="right">${fmtMoney(
+                        p.expenses || 0
+                      )}</td></tr>
+                      <tr><th>Xalis mənfəət</th><th class="right">${fmtMoney(
+                        p.netProfit || 0
+                      )}</th></tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
             <div class="card">
@@ -1542,22 +1810,23 @@
           '<tr><td colspan="6" class="tiny">Heç bir məlumat yoxdur</td></tr>';
 
         $("#mvBox").innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Kod</th>
-                <th>Material</th>
-                <th class="right">Giriş (kq)</th>
-                <th class="right">Giriş (₼)</th>
-                <th class="right">Çıxış (kq)</th>
-                <th class="right">Çıxış (₼)</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>`;
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Kod</th>
+                  <th>Material</th>
+                  <th class="right">Giriş (kq)</th>
+                  <th class="right">Giriş (₼)</th>
+                  <th class="right">Çıxış (kq)</th>
+                  <th class="right">Çıxış (₼)</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
       }
 
-      // ====== İNİT ======
       function renderView() {
         if (currentTab === "materials") renderMaterials();
         else if (currentTab === "receipt") renderReceipt();
