@@ -1,0 +1,51 @@
+package com.backend.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.backend.entity.Product;
+import com.backend.repository.ProductRepository;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ProductService {
+    
+    private final ProductRepository productRepository;
+    
+    public List<Product> findAll() {
+        return productRepository.findAll();
+    }
+    
+    public List<Product> findActive() {
+        return productRepository.findByIsActiveTrue();
+    }
+    
+    public Product findById(String id) {
+        return productRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Product not found: " + id));
+    }
+    
+    @Transactional
+    public Product create(Product product) {
+        return productRepository.save(product);
+    }
+    
+    @Transactional
+    public Product update(String id, Product product) {
+        Product existing = findById(id);
+        existing.setName(product.getName());
+        existing.setDescription(product.getDescription());
+        existing.setSalePrice(product.getSalePrice());
+        existing.setCategory(product.getCategory());
+        existing.setIsActive(product.getIsActive());
+        return productRepository.save(existing);
+    }
+    
+    @Transactional
+    public void delete(String id) {
+        productRepository.deleteById(id);
+    }
+}
