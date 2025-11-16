@@ -1410,7 +1410,8 @@
 function renderStoreTransfer() {
         const productOptions = (APP.productionStock || [])
          // .filter(s => s.quantity > 0)
-          .map(t => `<option value="${t.productId}">${t.productCode} — ${t.productName} (${fmtN(t.quantity, 0)} ədəd)</option>`)
+          .map(p => {const stock =( APP.productionStock || []).find(s => s.productId === p.id) || { quantity:0}; 
+            return `option value="${p.id}">${p.code} — ${p.name} (${fmtN(stock.quantity, 0)} ədəd)</option>`})
           .join("");
         
         
