@@ -235,7 +235,7 @@
   </head>
   <body>
     <div class="app">
-      <h1>Material anbarı (kq) + Maliyyə (AR/AP)</h1>
+      <h1>Material anbarı (kq) + Maliyyə (AR/AP) + Məhsul İdarəetmə</h1>
       <div class="sub">
         Valyuta: <b>AZN (₼)</b> • Ölçü vahidi: <b>kq</b> • Backend API: <b id="baseUrl">http://116.203.51.133:8085/stock</b>
       </div>
@@ -276,7 +276,7 @@
       <div id="view"></div>
 
       <div class="foot">
-        Məsləhət: əvvəlcə material kataloqunu əlavə edin, sonra gələn və silinən qeydləri yaradın.
+        Məsləhət: əvvəlcə material/məhsul kataloqunu əlavə edin, sonra müvafiq əməliyyatları yerinə yetirin.
       </div>
     </div>
 
@@ -285,8 +285,6 @@
       const BASE = "http://116.203.51.133:8085/stock";
       const API_HEADERS = {
         "Content-Type": "application/json",
-        // Token varsa buraya əlavə edin:
-        // "Authorization": "Bearer YOUR_TOKEN"
       };
 
       // helperlər
@@ -303,11 +301,10 @@
         { id: "issue", name: "Silmə" },
         { id: "stock", name: "Anbar" },
         { id: "products", name: "Məhsullar" },
-        { id: "production", name: "İstehsal" },
-        { id: "prodstock", name: "İstehsal Anbarı" },
-        { id: "storetransfer", name: "Mağazaya Köçürmə" },
-        { id: "storestock", name: "Mağaza Anbarı" },
-        { id: "storesales", name: "Satışlar" },
+        { id: "warehouse", name: "Anbar Stoku" },
+        { id: "transfer", name: "Mağazaya Transfer" },
+        { id: "store", name: "Mağaza Stoku" },
+        { id: "sales", name: "Satışlar" },
         { id: "finance", name: "Maliyyə (Gəlir/Xərc)" },
         { id: "arap", name: "Debitor/Kreditor (AR/AP)" },
         { id: "reports", name: "Hesabatlar" },
@@ -320,16 +317,16 @@
         receipts: [],
         issues: [],
         stock: [],
-        products: [],
-        production: [],
-        productionStock: [],
-        storeTransfers: [],
-        storeStock: [],
-        storeSales: [],
         finances: [],
         ar: [],
         ap: [],
         kpi: null,
+        products: [],
+        warehouseStock: [],
+        storeStock: [],
+        transfers: [],
+        sales: [],
+        adjustments: []
       };
 
       // render tabs
@@ -350,11 +347,10 @@
         else if (id === "issue") { fetchMaterials(); fetchIssues(); }
         else if (id === "stock") fetchStock();
         else if (id === "products") fetchProducts();
-        else if (id === "production") { fetchProducts(); fetchMaterials(); fetchProduction(); }
-        else if (id === "prodstock") fetchProductionStock();
-        else if (id === "storetransfer") { fetchProducts(); fetchStoreTransfers(); fetchProductionStock(); }
-        else if (id === "storestock") fetchStoreStock();
-        else if (id === "storesales") { fetchProducts(); fetchStoreSales(); fetchStoreStock(); }
+        else if (id === "warehouse") { fetchProducts(); fetchWarehouseStock(); fetchAdjustments(); }
+        else if (id === "transfer") { fetchProducts(); fetchWarehouseStock(); fetchTransfers(); }
+        else if (id === "store") { fetchProducts(); fetchStoreStock(); }
+        else if (id === "sales") { fetchProducts(); fetchStoreStock(); fetchSales(); }
         else if (id === "finance") fetchFinances();
         else if (id === "arap") fetchARAP();
         else if (id === "reports") { fetchMaterials(); fetchReceipts(); fetchIssues(); fetchPL(); }
@@ -464,35 +460,7 @@
           updateKPIBox();
         } catch (e) {}
       }
-      
-      async function fetchFinances() {
-        try {
-          APP.finances = await apiGET("/api/finances");
-          renderFinance();
-        } catch (e) {}
-      }
-      
-      async function fetchARAP() {
-        try {
-          APP.ar = await apiGET("/api/ar");
-          APP.ap = await apiGET("/api/ap");
-          renderARAP();
-        } catch (e) {}
-      }
-      
-      async function fetchPL() {
-        try {
-          const from = $("#rpFrom") ? $("#rpFrom").value : today().slice(0, 7) + "-01";
-          const to = $("#rpTo") ? $("#rpTo").value : today();
-          APP.pl = await apiGET(`/api/stock/profit-loss?from=${from}&to=${to}`);
-          APP.kpi = await apiGET(`/api/stock/kpi?from=${from}&to=${to}`);
-          APP.movements = await apiGET("/api/stock/movements");
-          renderReports();
-          updateKPIBox();
-        } catch (e) {}
-      }
 
-      // ====== PRODUCT FETCHES ======
       async function fetchProducts() {
         try {
           APP.products = await apiGET("/api/products");
@@ -534,47 +502,31 @@
           if (currentTab === "sales") renderSales();
         } catch (e) {}
       }
-
-      // ====== NEW FETCHES FOR PRODUCTION & STORE ======
-      async function fetchProducts() {
+      
+      async function fetchFinances() {
         try {
-          APP.products = await apiGET("/api/products");
-          if (currentTab === "products") renderProducts();
+          APP.finances = await apiGET("/api/finances");
+          renderFinance();
         } catch (e) {}
       }
-
-      async function fetchProduction() {
+      
+      async function fetchARAP() {
         try {
-          APP.production = await apiGET("/api/production");
-          if (currentTab === "production") renderProduction();
+          APP.ar = await apiGET("/api/ar");
+          APP.ap = await apiGET("/api/ap");
+          renderARAP();
         } catch (e) {}
       }
-
-      async function fetchProductionStock() {
+      
+      async function fetchPL() {
         try {
-          APP.productionStock = await apiGET("/api/production-stock");
-          if (currentTab === "prodstock") renderProductionStock();
-        } catch (e) {}
-      }
-
-      async function fetchStoreTransfers() {
-        try {
-          APP.storeTransfers = await apiGET("/api/store-transfers");
-          if (currentTab === "storetransfer") renderStoreTransfer();
-        } catch (e) {}
-      }
-
-      async function fetchStoreStock() {
-        try {
-          APP.storeStock = await apiGET("/api/store-stock");
-          if (currentTab === "storestock") renderStoreStock();
-        } catch (e) {}
-      }
-
-      async function fetchStoreSales() {
-        try {
-          APP.storeSales = await apiGET("/api/store-sales");
-          if (currentTab === "storesales") renderStoreSales();
+          const from = $("#rpFrom") ? $("#rpFrom").value : today().slice(0, 7) + "-01";
+          const to = $("#rpTo") ? $("#rpTo").value : today();
+          APP.pl = await apiGET(`/api/stock/profit-loss?from=${from}&to=${to}`);
+          APP.kpi = await apiGET(`/api/stock/kpi?from=${from}&to=${to}`);
+          APP.movements = await apiGET("/api/stock/movements");
+          renderReports();
+          updateKPIBox();
         } catch (e) {}
       }
 
@@ -786,7 +738,7 @@
             <div class="card">
               <div class="section-title">Son silmələr</div>
               <table>
-                <thead><tr><th>Tarix</th><th>Kod</th><th>Material</th><th class="right">kq</th><th class="right">Orta qiymət</th><th class="right">Məbləğ</th><th>İş</th><th>Şərh</th></tr></thead>
+                <thead><tr><th>Tarix</th><th>Kod</th><th>Material</th><th class="right">kq</th><th>Orta qiymət</th><th class="right">Məbləğ</th><th>İş</th><th>Şərh</th></tr></thead>
                 <tbody>${items}</tbody>
               </table>
             </div>
@@ -806,8 +758,6 @@
         }
         
         try {
-          // Backend avgCostUsed-i hesablayacaq
-          // Əgər backend gözləmirsə, client tərəfdən hesabla:
           const receipts = APP.receipts.filter(r => r.materialId === materialId);
           const totalQty = receipts.reduce((a,b) => a + Number(b.qtyKg || 0), 0);
           const totalCost = receipts.reduce((a,b) => a + Number(b.totalCost || 0), 0);
@@ -854,343 +804,36 @@
           </div>`;
       }
 
-      // --- FINANCE ---
-      function renderFinance() {
-        const list = (APP.finances || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(f => `<tr>
-            <td>${f.date}</td>
-            <td>${f.type === "income" ? "Gəlir" : "Xərc"}</td>
-            <td>${f.category||""}</td>
-            <td>${f.counterparty||""}</td>
-            <td class="right">${fmtMoney(f.amountAzn||0)}</td>
-            <td class="tiny">${f.note||""}</td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Qeyd yoxdur</td></tr>';
-          
-        $("#view").innerHTML = `
-          <div class="grid cols-2">
-            <div class="card">
-              <div class="section-title">Gəlir / Xərc</div>
-              <div class="row wrap">
-                <div style="flex:1 1 140px;"><label>Tip</label><select id="fnType"><option value="income">Gəlir</option><option value="expense">Xərc</option></select></div>
-                <div style="flex:2 1 220px;"><label>Kateqoriya</label><input id="fnCat" placeholder="Kira, logistika, satış..."></div>
-                <div style="flex:1 1 150px;"><label>Məbləğ (₼)</label><input id="fnAmt" type="number" step="0.01"></div>
-                <div style="flex:1 1 160px;"><label>Tarix</label><input id="fnDate" type="date" value="${today()}"></div>
-                <div style="flex:2 1 220px;"><label>Kontragent</label><input id="fnCp" placeholder="MMC və ya şəxsin adı"></div>
-              </div>
-              <label>Qeyd</label><textarea id="fnNote"></textarea>
-              <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addFinance()">Əlavə et</button></div>
-            </div>
-            <div class="card">
-              <div class="section-title">Qeydlər</div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Tip</th><th>Kateqoriya</th><th>Kontragent</th><th class="right">Məbləğ</th><th>Qeyd</th></tr></thead>
-                <tbody>${list}</tbody>
-              </table>
-            </div>
-          </div>`;
-      }
-
-      async function addFinance() {
-        const type = $("#fnType").value;
-        const category = $("#fnCat").value.trim();
-        const amount = Number($("#fnAmt").value);
-        const date = $("#fnDate").value || today();
-        const counterparty = $("#fnCp").value.trim();
-        const note = $("#fnNote").value.trim();
-        
-        if (!category || amount < 0) { 
-          alert("Kateqoriya və məbləğ daxil edin"); 
-          return; 
-        }
-        
-        try {
-          await apiPOST("/api/finances", { 
-            date, 
-            type, 
-            category, 
-            amountAzn: amount, 
-            counterparty, 
-            note 
-          });
-          await fetchFinances();
-          await fetchPL();
-          $("#fnCat").value = "";
-          $("#fnAmt").value = "";
-          $("#fnCp").value = "";
-          $("#fnNote").value = "";
-        } catch (e) {}
-      }
-
-      // --- AR / AP ---
-      function arRemaining(entry) {
-        const paid = (entry.payments || []).reduce((a,b) => a + Number(b.amountAzn || 0), 0);
-        return (entry.amountAzn || 0) - paid;
-      }
-      
-      function apRemaining(entry) { 
-        return arRemaining(entry); 
-      }
-
-      function renderARAP() {
-        const arRows = (APP.ar || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(e => `<tr>
-            <td>${e.date}</td>
-            <td>${e.counterparty||""}</td>
-            <td class="right">${fmtMoney(e.amountAzn||0)}</td>
-            <td class="right">${fmtMoney(arRemaining(e))}</td>
-            <td>${e.status||""}</td>
-            <td class="right"><button class="ghost" onclick="addARPayPrompt('${e.id}')">Ödəniş</button></td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Debitor yoxdur</td></tr>';
-
-        const apRows = (APP.ap || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(e => `<tr>
-            <td>${e.date}</td>
-            <td>${e.counterparty||""}</td>
-            <td class="right">${fmtMoney(e.amountAzn||0)}</td>
-            <td class="right">${fmtMoney(apRemaining(e))}</td>
-            <td>${e.status||""}</td>
-            <td class="right"><button class="ghost" onclick="addAPPayPrompt('${e.id}')">Ödəniş</button></td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Kreditor yoxdur</td></tr>';
-
-        $("#view").innerHTML = `
-          <div class="grid cols-2">
-            <div class="card">
-              <div class="section-title">Debitorlar (AR)</div>
-              <div class="row wrap">
-                <div style="flex:2 1 220px;"><label>Kontragent</label><input id="arCp"></div>
-                <div style="flex:1 1 160px;"><label>Tarix</label><input id="arDate" type="date" value="${today()}"></div>
-                <div style="flex:1 1 150px;"><label>Məbləğ (₼)</label><input id="arAmt" type="number" step="0.01"></div>
-                <div style="flex:1 1 160px;"><label>Status</label><select id="arStatus"><option>open</option><option>partial</option><option>closed</option></select></div>
-              </div>
-              <label>Qeyd</label><textarea id="arNote"></textarea>
-              <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addAR()">Əlavə et</button></div>
-              <div class="divider"></div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kontragent</th><th class="right">Məbləğ</th><th class="right">Qalıq</th><th>Status</th><th class="right">Əməliyyat</th></tr></thead>
-                <tbody>${arRows}</tbody>
-              </table>
-            </div>
-
-            <div class="card">
-              <div class="section-title">Kreditorlar (AP)</div>
-              <div class="row wrap">
-                <div style="flex:2 1 220px;"><label>Kontragent</label><input id="apCp"></div>
-                <div style="flex:1 1 160px;"><label>Tarix</label><input id="apDate" type="date" value="${today()}"></div>
-                <div style="flex:1 1 150px;"><label>Məbləğ (₼)</label><input id="apAmt" type="number" step="0.01"></div>
-                <div style="flex:1 1 160px;"><label>Status</label><select id="apStatus"><option>open</option><option>partial</option><option>closed</option></select></div>
-              </div>
-              <label>Qeyd</label><textarea id="apNote"></textarea>
-              <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addAP()">Əlavə et</button></div>
-              <div class="divider"></div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kontragent</th><th class="right">Məbləğ</th><th class="right">Qalıq</th><th>Status</th><th class="right">Əməliyyat</th></tr></thead>
-                <tbody>${apRows}</tbody>
-              </table>
-            </div>
-          </div>`;
-      }
-
-      async function addAR() {
-        const counterparty = $("#arCp").value.trim();
-        const date = $("#arDate").value || today();
-        const amount = Number($("#arAmt").value);
-        const status = $("#arStatus").value;
-        const note = $("#arNote").value.trim();
-        
-        if (!counterparty || amount <= 0) { 
-          alert("Kontragent və məbləğ (>0) vacibdir"); 
-          return; 
-        }
-        
-        try {
-          await apiPOST("/api/ar", { 
-            counterparty, 
-            date, 
-            amountAzn: amount, 
-            status, 
-            payments: [], 
-            note 
-          });
-          await fetchARAP();
-          $("#arCp").value = "";
-          $("#arAmt").value = "";
-          $("#arNote").value = "";
-        } catch (e) {}
-      }
-      
-      async function addAP() {
-        const counterparty = $("#apCp").value.trim();
-        const date = $("#apDate").value || today();
-        const amount = Number($("#apAmt").value);
-        const status = $("#apStatus").value;
-        const note = $("#apNote").value.trim();
-        
-        if (!counterparty || amount <= 0) { 
-          alert("Kontragent və məbləğ (>0) vacibdir"); 
-          return; 
-        }
-        
-        try {
-          await apiPOST("/api/ap", { 
-            counterparty, 
-            date, 
-            amountAzn: amount, 
-            status, 
-            payments: [], 
-            note 
-          });
-          await fetchARAP();
-          $("#apCp").value = "";
-          $("#apAmt").value = "";
-          $("#apNote").value = "";
-        } catch (e) {}
-      }
-
-      async function addARPayPrompt(id) {
-        const e = APP.ar.find(x => x.id === id);
-        if (!e) return;
-        const amt = prompt("Ödəniş məbləği (₼)");
-        if (amt === null) return;
-        const a = Number(amt);
-        if (!(a > 0)) return alert("Yanlış məbləğ");
-        
-        try {
-          await apiPOST(`/api/ar/${id}/payments`, { 
-            date: today(), 
-            amountAzn: a 
-          });
-          await fetchARAP();
-        } catch (e) {}
-      }
-      
-      async function addAPPayPrompt(id) {
-        const e = APP.ap.find(x => x.id === id);
-        if (!e) return;
-        const amt = prompt("Ödəniş məbləği (₼)");
-        if (amt === null) return;
-        const a = Number(amt);
-        if (!(a > 0)) return alert("Yanlış məbləğ");
-        
-        try {
-          await apiPOST(`/api/ap/${id}/payments`, { 
-            date: today(), 
-            amountAzn: a 
-          });
-          await fetchARAP();
-        } catch (e) {}
-      }
-
-      // --- REPORTS ---
-      function renderReports() {
-        const from = today().slice(0, 7) + "-01";
-        const to = today();
-        const p = APP.pl || {};
-        
-        $("#view").innerHTML = `
-          <div class="grid cols-2">
-            <div class="card">
-              <div class="section-title">Mənfəət/Zərər hesabatı</div>
-              <div class="row wrap">
-                <div style="flex:1 1 160px;"><label>Başlanğıc</label><input id="rpFrom" type="date" value="${from}"></div>
-                <div style="flex:1 1 160px;"><label>Son</label><input id="rpTo" type="date" value="${to}"></div>
-                <div style="align-self:flex-end;"><button class="primary" onclick="fetchPL()">Göstər</button></div>
-              </div>
-              <div id="plBox" style="margin-top:8px;">
-                <table>
-                  <tbody>
-                    <tr><td>Gəlir</td><td class="right">${fmtMoney(p.revenue || 0)}</td></tr>
-                    <tr><td>Satılan malın maya dəyəri (COGS)</td><td class="right">${fmtMoney(p.cogs || 0)}</td></tr>
-                    <tr><th>Brüt mənfəət</th><th class="right">${fmtMoney(p.grossProfit || 0)}</th></tr>
-                    <tr><td>Digər xərclər</td><td class="right">${fmtMoney(p.expenses || 0)}</td></tr>
-                    <tr><th>Xalis mənfəət</th><th class="right">${fmtMoney(p.netProfit || 0)}</th></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div class="card">
-              <div class="section-title">Material hərəkətləri</div>
-              <div id="mvBox"></div>
-            </div>
-          </div>`;
-        renderMovement();
-      }
-
-      function renderMovement() {
-        const rows = (APP.movements || []).map(m => {
-          return `<tr>
-            <td>${m.code}</td>
-            <td>${m.name}</td>
-            <td class="right">${fmtN(m.inQty, 3)}</td>
-            <td class="right">${fmtMoney(m.inSum)}</td>
-            <td class="right">${fmtN(m.outQty, 3)}</td>
-            <td class="right">${fmtMoney(m.outSum)}</td>
-          </tr>`;
-        }).join("") || '<tr><td colspan="6" class="tiny">Heç bir məlumat yoxdur</td></tr>';
-        
-        $("#mvBox").innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Kod</th>
-                <th>Material</th>
-                <th class="right">Giriş (kq)</th>
-                <th class="right">Giriş (₼)</th>
-                <th class="right">Çıxış (kq)</th>
-                <th class="right">Çıxış (₼)</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>`;
-      }
-
-      // ====== İNİT ======
-      function renderView() {
-        if (currentTab === "materials") renderMaterials();
-        else if (currentTab === "receipt") renderReceipt();
-        else if (currentTab === "issue") renderIssue();
-        else if (currentTab === "stock") renderStock();
-        else if (currentTab === "products") renderProducts();
-        else if (currentTab === "production") renderProduction();
-        else if (currentTab === "prodstock") renderProductionStock();
-        else if (currentTab === "storetransfer") renderStoreTransfer();
-        else if (currentTab === "storestock") renderStoreStock();
-        else if (currentTab === "storesales") renderStoreSales();
-        else if (currentTab === "finance") renderFinance();
-        else if (currentTab === "arap") renderARAP();
-        else if (currentTab === "reports") renderReports();
-      }
-
-      // ====== PRODUCTS ======
+      // --- PRODUCTS ---
       function renderProducts() {
         const list = APP.products.map(x => `
           <tr>
             <td>${x.code || ""}</td>
             <td>${x.name || ""}</td>
-            <td class="tiny">${x.description || ""}</td>
             <td>${x.category || ""}</td>
-            <td class="right">${fmtMoney(x.unitPrice)}</td>
-            <td>${x.isActive === false ? '<span class="badge warn">arxiv</span>' : '<span class="badge ok">aktiv</span>'}</td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Məhsul yoxdur</td></tr>';
+            <td class="right">${fmtMoney(x.salePrice)}</td>
+            <td class="tiny">${x.description || ""}</td>
+          </tr>`).join("") || '<tr><td colspan="5" class="tiny">Məhsul yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
-              <div class="section-title">Məhsul kataloqu</div>
+              <div class="section-title">Məhsul əlavə et</div>
               <div class="row wrap">
-                <div style="flex:1 1 150px;"><label>Kod</label><input id="pCode" placeholder="PRD-001"></div>
-                <div style="flex:2 1 200px;"><label>Ad</label><input id="pName" placeholder="Ayaqqabı model A"></div>
-                <div style="flex:2 1 200px;"><label>Kateqoriya</label><input id="pCat" placeholder="Ayaqqabı"></div>
+                <div style="flex:1 1 150px;"><label>Kod</label><input id="pCode" placeholder="AYQ-001"></div>
+                <div style="flex:2 1 200px;"><label>Ad</label><input id="pName" placeholder="Ayaqqabı Model A"></div>
+                <div style="flex:1 1 150px;"><label>Kateqoriya</label><input id="pCat" placeholder="Ayaqqabı"></div>
                 <div style="flex:1 1 150px;"><label>Satış qiyməti (₼)</label><input id="pPrice" type="number" step="0.01"></div>
               </div>
-              <label>Təsvir</label><textarea id="pDesc" placeholder="Məhsul haqqında"></textarea>
+              <label>Təsvir</label><textarea id="pDesc"></textarea>
               <div class="row" style="justify-content:flex-end;margin-top:8px;">
-                <button class="primary" onclick="addProduct()">Məhsul əlavə et</button>
+                <button class="primary" onclick="addProduct()">Əlavə et</button>
               </div>
             </div>
             <div class="card">
-              <div class="section-title">Məhsullar</div>
+              <div class="section-title">Məhsul siyahısı</div>
               <table>
-                <thead><tr><th>Kod</th><th>Ad</th><th>Təsvir</th><th>Kateqoriya</th><th class="right">Satış qiyməti</th><th>Status</th></tr></thead>
+                <thead><tr><th>Kod</th><th>Ad</th><th>Kateqoriya</th><th class="right">Qiymət</th><th>Təsvir</th></tr></thead>
                 <tbody>${list}</tbody>
               </table>
             </div>
@@ -1203,369 +846,236 @@
         const category = $("#pCat").value.trim();
         const price = Number($("#pPrice").value || 0);
         const description = $("#pDesc").value.trim();
-        if (!code || !name) { alert("Kod və adı daxil edin"); return; }
+        if (!code || !name) { alert("Kod və ad vacibdir"); return; }
         try {
-          await apiPOST("/api/products", { 
-            code, 
-            name, 
-            category,
-            unitPrice: price, 
-            description,
-            isActive: true 
-          });
+          await apiPOST("/api/products", { code, name, category, salePrice: price, description, isActive: true });
           await fetchProducts();
-          $("#pCode").value = ""; 
-          $("#pName").value = ""; 
+          $("#pCode").value = "";
+          $("#pName").value = "";
           $("#pCat").value = "";
           $("#pPrice").value = "";
           $("#pDesc").value = "";
         } catch (e) {}
       }
 
-      // ====== PRODUCTION ======
-      function renderProduction() {
-        const productOptions = APP.products.filter(x => x.isActive !== false)
-          .map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`).join("");
-        
-        const items = APP.production.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(p => {
-            const prod = APP.products.find(pr => pr.id === p.productId) || {};
-            return `<tr>
-              <td>${p.orderNumber}</td>
-              <td>${p.date}</td>
-              <td>${prod.code || ""}</td>
-              <td>${prod.name || ""}</td>
-              <td class="right">${fmtN(p.quantity, 0)}</td>
-              <td class="right">${fmtMoney(p.totalCost)}</td>
-              <td><span class="badge ${p.status === 'completed' ? 'ok' : 'warn'}">${p.status}</span></td>
-              <td class="tiny">${p.note || ""}</td>
-            </tr>`;
-          }).join("") || '<tr><td colspan="8" class="tiny">İstehsal yoxdur</td></tr>';
+      // --- WAREHOUSE ---
+      function renderWarehouse() {
+        const stockList = APP.warehouseStock.map(s => `
+          <tr>
+            <td>${s.productCode || ""}</td>
+            <td>${s.productName || ""}</td>
+            <td>${s.category || ""}</td>
+            <td class="right">${fmtN(s.quantity, 0)}</td>
+          </tr>`).join("") || '<tr><td colspan="4" class="tiny">Anbar boşdur</td></tr>';
+
+        const adjList = (APP.adjustments || []).slice().reverse().slice(0, 10).map(a => {
+          const prod = APP.products.find(p => p.id === a.productId) || {};
+          return `<tr>
+            <td>${a.date}</td>
+            <td>${prod.code || ""}</td>
+            <td><span class="badge ${a.type === 'add' ? 'ok' : 'warn'}">${a.type === 'add' ? 'Əlavə' : 'Azalt'}</span></td>
+            <td class="right">${fmtN(a.quantity, 0)}</td>
+            <td class="tiny">${a.note || ""}</td>
+          </tr>`;
+        }).join("") || '<tr><td colspan="5" class="tiny">Tarixçə yoxdur</td></tr>';
+
+        const prodOptions = APP.products.filter(p => p.isActive !== false)
+          .map(p => `<option value="${p.id}">${p.code} — ${p.name}</option>`).join("");
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
-              <div class="section-title">İstehsal sifarişi</div>
+              <div class="section-title">Anbara əlavə et / azalt</div>
               <div class="row wrap">
-                <div style="flex:1 1 150px;"><label>Sifariş №</label><input id="prodOrderNum" placeholder="ORD-001"></div>
-                <div style="flex:2 1 200px;"><label>Məhsul</label><select id="prodProduct">${productOptions}</select></div>
-                <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="prodQty" type="number" step="1"></div>
-                <div style="flex:1 1 160px;"><label>Tarix</label><input id="prodDate" type="date" value="${today()}"></div>
+                <div style="flex:2 1 200px;"><label>Məhsul</label><select id="whProd">${prodOptions}</select></div>
+                <div style="flex:1 1 120px;"><label>Tip</label><select id="whType"><option value="add">Əlavə et</option><option value="subtract">Azalt</option></select></div>
+                <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="whQty" type="number" step="1"></div>
+                <div style="flex:1 1 160px;"><label>Tarix</label><input id="whDate" type="date" value="${today()}"></div>
               </div>
-              <div class="section-title" style="margin-top:12px;">İstifadə olunan xammallar</div>
-              <div id="prodMaterials"></div>
-              <button onclick="addProdMaterialRow()" style="margin-top:8px;">+ Xammal əlavə et</button>
-              <label style="margin-top:12px;">Qeyd</label><textarea id="prodNote"></textarea>
+              <label>Qeyd</label><textarea id="whNote" placeholder="Yeni istehsal, defekt və s."></textarea>
               <div class="row" style="justify-content:flex-end;margin-top:8px;">
-                <button class="primary" onclick="addProduction()">İstehsal et</button>
+                <button class="primary" onclick="adjustWarehouse()">Tətbiq et</button>
               </div>
             </div>
             <div class="card">
-              <div class="section-title">İstehsal tarixçəsi</div>
+              <div class="section-title">Anbar stoku</div>
               <table>
-                <thead><tr><th>Sifariş №</th><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Maya</th><th>Status</th><th>Qeyd</th></tr></thead>
-                <tbody>${items}</tbody>
+                <thead><tr><th>Kod</th><th>Məhsul</th><th>Kateqoriya</th><th class="right">Miqdar</th></tr></thead>
+                <tbody>${stockList}</tbody>
+              </table>
+              <div class="section-title" style="margin-top:16px;">Son əməliyyatlar</div>
+              <table>
+                <thead><tr><th>Tarix</th><th>Kod</th><th>Tip</th><th class="right">Miqdar</th><th>Qeyd</th></tr></thead>
+                <tbody>${adjList}</tbody>
               </table>
             </div>
           </div>`;
-        
-        // İlk xammal sətiri
-        addProdMaterialRow();
       }
 
-      let prodMatRowCounter = 0;
-      function addProdMaterialRow() {
-        const matOptions = APP.materials.filter(x => x.isActive !== false)
-          .map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`).join("");
-        
-        const row = document.createElement("div");
-        row.className = "row wrap";
-        row.style.marginBottom = "8px";
-        row.id = `prodMatRow${prodMatRowCounter}`;
-        row.innerHTML = `
-          <div style="flex:2 1 200px;"><label>Xammal</label><select class="prodMat">${matOptions}</select></div>
-          <div style="flex:1 1 120px;"><label>Miqdar (kq)</label><input type="number" step="0.001" class="prodMatQty"></div>
-          <div style="align-self:flex-end;"><button class="ghost" onclick="document.getElementById('prodMatRow${prodMatRowCounter}').remove()">Sil</button></div>
-        `;
-        $("#prodMaterials").appendChild(row);
-        prodMatRowCounter++;
-      }
-
-      async function addProduction() {
-        const orderNumber = $("#prodOrderNum").value.trim();
-        const productId = $("#prodProduct").value;
-        const quantity = Number($("#prodQty").value);
-        const date = $("#prodDate").value || today();
-        const note = $("#prodNote").value.trim();
-
-        if (!orderNumber || !productId || quantity <= 0) {
-          alert("Sifariş №, məhsul və miqdar (>0) vacibdir");
-          return;
-        }
-
-        // Xammalları toplama
-        const materialsUsed = [];
-        document.querySelectorAll("#prodMaterials .row").forEach(row => {
-          const matId = row.querySelector(".prodMat").value;
-          const qty = Number(row.querySelector(".prodMatQty").value || 0);
-          if (matId && qty > 0) {
-            materialsUsed.push({ materialId: matId, qtyUsed: qty, costUsed: 0 });
-          }
-        });
-
-        if (materialsUsed.length === 0) {
-          alert("Ən azı bir xammal əlavə edin");
-          return;
-        }
-
+      async function adjustWarehouse() {
+        const productId = $("#whProd").value;
+        const type = $("#whType").value;
+        const quantity = Number($("#whQty").value);
+        const date = $("#whDate").value || today();
+        const note = $("#whNote").value.trim();
+        if (!productId || quantity <= 0) { alert("Məhsul və miqdar (>0) vacibdir"); return; }
         try {
-          await apiPOST("/api/production", {
-            orderNumber,
-            date,
-            productId,
-            quantity,
-            materialsUsed,
-            status: "completed",
-            note
-          });
-          await fetchProduction();
-          await fetchProductionStock();
-          await fetchStock();
-          $("#prodOrderNum").value = "";
-          $("#prodQty").value = "";
-          $("#prodNote").value = "";
-          $("#prodMaterials").innerHTML = "";
-          prodMatRowCounter = 0;
-          addProdMaterialRow();
+          await apiPOST("/api/warehouse-stock/adjust", { date, productId, type, quantity, note });
+          await fetchWarehouseStock();
+          await fetchAdjustments();
+          $("#whQty").value = "";
+          $("#whNote").value = "";
         } catch (e) {}
       }
 
-      // ====== PRODUCTION STOCK ======
-      function renderProductionStock() {
-        const rows = (APP.productionStock || []).map(s => {
-          return `<tr>
-            <td>${s.productCode || ""}</td>
-            <td>${s.productName || ""}</td>
-            <td class="right">${fmtN(s.quantity, 0)}</td>
-            <td class="right">${fmtMoney(s.avgCost)}</td>
-            <td class="right">${fmtMoney(s.totalValue)}</td>
-          </tr>`;
-        }).join("") || '<tr><td colspan="5" class="tiny">İstehsal anbarında məhsul yoxdur</td></tr>';
-
-        $("#view").innerHTML = `
-          <div class="card">
-            <div class="section-title">İstehsal anbarı (Fabrik)</div>
-            <table>
-              <thead><tr><th>Kod</th><th>Məhsul</th><th class="right">Miqdar (ədəd)</th><th class="right">Orta maya</th><th class="right">Ümumi dəyər</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>`;
-      }
-
-      // ====== STORE TRANSFER ======
-      function renderStoreTransfer() {
-        const productOptions = (APP.productionStock || [])
-          .filter(s => s.quantity > 0)
+      // --- TRANSFER ---
+      function renderTransfer() {
+        const prodOptions = APP.warehouseStock.filter(s => s.quantity > 0)
           .map(s => `<option value="${s.productId}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd)</option>`)
           .join("");
 
-        const items = APP.storeTransfers.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(t => {
-            const prod = APP.products.find(p => p.id === t.productId) || {};
-            return `<tr>
-              <td>${t.date}</td>
-              <td>${prod.code || ""}</td>
-              <td>${prod.name || ""}</td>
-              <td class="right">${fmtN(t.quantity, 0)}</td>
-              <td class="right">${fmtMoney(t.costPerUnit)}</td>
-              <td class="right">${fmtMoney(t.totalCost)}</td>
-              <td class="tiny">${t.note || ""}</td>
-            </tr>`;
-          }).join("") || '<tr><td colspan="7" class="tiny">Transfer yoxdur</td></tr>';
+        const transList = APP.transfers.slice().reverse().map(t => {
+          const prod = APP.products.find(p => p.id === t.productId) || {};
+          return `<tr>
+            <td>${t.date}</td>
+            <td>${prod.code || ""}</td>
+            <td>${prod.name || ""}</td>
+            <td class="right">${fmtN(t.quantity, 0)}</td>
+            <td class="tiny">${t.note || ""}</td>
+          </tr>`;
+        }).join("") || '<tr><td colspan="5" class="tiny">Transfer yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
-              <div class="section-title">Mağazaya köçürmə</div>
+              <div class="section-title">Mağazaya transfer et</div>
               <div class="row wrap">
-                <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct">${productOptions}</select></div>
+                <div style="flex:2 1 200px;"><label>Məhsul</label><select id="trProd">${prodOptions}</select></div>
                 <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="trQty" type="number" step="1"></div>
                 <div style="flex:1 1 160px;"><label>Tarix</label><input id="trDate" type="date" value="${today()}"></div>
               </div>
               <label>Qeyd</label><textarea id="trNote"></textarea>
               <div class="row" style="justify-content:flex-end;margin-top:8px;">
-                <button class="primary" onclick="addStoreTransfer()">Mağazaya köçür</button>
+                <button class="primary" onclick="transferToStore()">Mağazaya göndər</button>
               </div>
             </div>
             <div class="card">
-              <div class="section-title">Köçürmə tarixçəsi</div>
+              <div class="section-title">Transfer tarixçəsi</div>
               <table>
-                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Maya/ədəd</th><th class="right">Cəm</th><th>Qeyd</th></tr></thead>
-                <tbody>${items}</tbody>
+                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th>Qeyd</th></tr></thead>
+                <tbody>${transList}</tbody>
               </table>
             </div>
           </div>`;
       }
 
-      async function addStoreTransfer() {
-        const productId = $("#trProduct").value;
+      async function transferToStore() {
+        const productId = $("#trProd").value;
         const quantity = Number($("#trQty").value);
         const date = $("#trDate").value || today();
         const note = $("#trNote").value.trim();
-
-        if (!productId || quantity <= 0) {
-          alert("Məhsul və miqdar (>0) vacibdir");
-          return;
-        }
-
+        if (!productId || quantity <= 0) { alert("Məhsul və miqdar (>0) vacibdir"); return; }
         try {
-          await apiPOST("/api/store-transfers", {
-            date,
-            productId,
-            quantity,
-            note
-          });
-          await fetchStoreTransfers();
-          await fetchProductionStock();
+          await apiPOST("/api/store-transfers", { date, productId, quantity, note });
+          await fetchWarehouseStock();
           await fetchStoreStock();
+          await fetchTransfers();
           $("#trQty").value = "";
           $("#trNote").value = "";
         } catch (e) {}
       }
 
-      // ====== STORE STOCK ======
-      function renderStoreStock() {
-        const rows = (APP.storeStock || []).map(s => {
-          return `<tr>
+      // --- STORE ---
+      function renderStore() {
+        const list = APP.storeStock.map(s => `
+          <tr>
             <td>${s.productCode || ""}</td>
             <td>${s.productName || ""}</td>
+            <td>${s.category || ""}</td>
             <td class="right">${fmtN(s.quantity, 0)}</td>
-            <td class="right">${fmtMoney(s.avgCost)}</td>
-            <td class="right">${fmtMoney(s.unitPrice)}</td>
-            <td class="right">${fmtMoney(s.totalValue)}</td>
-          </tr>`;
-        }).join("") || '<tr><td colspan="6" class="tiny">Mağaza anbarında məhsul yoxdur</td></tr>';
+            <td class="right">${fmtMoney(s.salePrice)}</td>
+          </tr>`).join("") || '<tr><td colspan="5" class="tiny">Mağaza boşdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="card">
-            <div class="section-title">Mağaza anbarı</div>
+            <div class="section-title">Mağaza stoku</div>
             <table>
-              <thead><tr><th>Kod</th><th>Məhsul</th><th class="right">Miqdar (ədəd)</th><th class="right">Orta maya</th><th class="right">Satış qiyməti</th><th class="right">Dəyər</th></tr></thead>
-              <tbody>${rows}</tbody>
+              <thead><tr><th>Kod</th><th>Məhsul</th><th>Kateqoriya</th><th class="right">Miqdar</th><th class="right">Satış qiyməti</th></tr></thead>
+              <tbody>${list}</tbody>
             </table>
           </div>`;
       }
 
-      // ====== STORE SALES ======
-      function renderStoreSales() {
-        const productOptions = (APP.storeStock || [])
-          .filter(s => s.quantity > 0)
-          .map(s => `<option value="${s.productId}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd - ${fmtMoney(s.unitPrice)})</option>`)
+      // --- SALES ---
+      function renderSales() {
+        const prodOptions = APP.storeStock.filter(s => s.quantity > 0)
+          .map(s => `<option value="${s.productId}" data-price="${s.salePrice}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd - ${fmtMoney(s.salePrice)})</option>`)
           .join("");
 
-        const items = APP.storeSales.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(sale => {
-            const prod = APP.products.find(p => p.id === sale.productId) || {};
-            return `<tr>
-              <td>${sale.date}</td>
-              <td>${prod.code || ""}</td>
-              <td>${prod.name || ""}</td>
-              <td class="right">${fmtN(sale.quantity, 0)}</td>
-              <td class="right">${fmtMoney(sale.salePrice)}</td>
-              <td class="right">${fmtMoney(sale.totalRevenue)}</td>
-              <td class="right">${fmtMoney(sale.profit)}</td>
-              <td>${sale.customer || ""}</td>
-              <td class="tiny">${sale.note || ""}</td>
-            </tr>`;
-          }).join("") || '<tr><td colspan="9" class="tiny">Satış yoxdur</td></tr>';
+        const salesList = APP.sales.slice().reverse().map(sale => {
+          const prod = APP.products.find(p => p.id === sale.productId) || {};
+          return `<tr>
+            <td>${sale.date}</td>
+            <td>${prod.code || ""}</td>
+            <td>${prod.name || ""}</td>
+            <td class="right">${fmtN(sale.quantity, 0)}</td>
+            <td class="right">${fmtMoney(sale.unitPrice)}</td>
+            <td class="right">${fmtMoney(sale.totalAmount)}</td>
+            <td>${sale.customer || ""}</td>
+            <td class="tiny">${sale.note || ""}</td>
+          </tr>`;
+        }).join("") || '<tr><td colspan="8" class="tiny">Satış yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
-              <div class="section-title">Satış</div>
+              <div class="section-title">Satış et</div>
               <div class="row wrap">
-                <div style="flex:2 1 200px;"><label>Məhsul</label><select id="saleProduct">${productOptions}</select></div>
+                <div style="flex:2 1 200px;"><label>Məhsul</label><select id="saleProd" onchange="updateSalePrice()">${prodOptions}</select></div>
                 <div style="flex:1 1 100px;"><label>Miqdar</label><input id="saleQty" type="number" step="1"></div>
-                <div style="flex:1 1 140px;"><label>Satış qiyməti (₼)</label><input id="salePrice" type="number" step="0.01"></div>
+                <div style="flex:1 1 140px;"><label>Qiymət (₼)</label><input id="salePrice" type="number" step="0.01"></div>
                 <div style="flex:1 1 160px;"><label>Tarix</label><input id="saleDate" type="date" value="${today()}"></div>
-                <div style="flex:2 1 200px;"><label>Müştəri</label><input id="saleCustomer" placeholder="Müştəri adı"></div>
+                <div style="flex:2 1 200px;"><label>Müştəri</label><input id="saleCust" placeholder="Müştəri adı"></div>
               </div>
               <label>Qeyd</label><textarea id="saleNote"></textarea>
               <div class="row" style="justify-content:flex-end;margin-top:8px;">
-                <button class="primary" onclick="addStoreSale()">Satış et</button>
+                <button class="primary" onclick="makeSale()">Satış et</button>
               </div>
             </div>
             <div class="card">
               <div class="section-title">Satış tarixçəsi</div>
               <table>
-                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Qiymət</th><th class="right">Gəlir</th><th class="right">Mənfəət</th><th>Müştəri</th><th>Qeyd</th></tr></thead>
-                <tbody>${items}</tbody>
+                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Qiymət</th><th class="right">Məbləğ</th><th>Müştəri</th><th>Qeyd</th></tr></thead>
+                <tbody>${salesList}</tbody>
               </table>
             </div>
           </div>`;
         
-        // Auto-fill price
-        $("#saleProduct").addEventListener("change", function() {
-          const prodId = this.value;
-          const prod = APP.products.find(p => p.id === prodId);
-          if (prod) {
-            $("#salePrice").value = prod.unitPrice;
-          }
-        });
-        // Trigger initial
-        if (APP.products.length && $("#saleProduct").value) {
-          const prod = APP.products.find(p => p.id === $("#saleProduct").value);
-          if (prod) $("#salePrice").value = prod.unitPrice;
+        updateSalePrice();
+      }
+
+      function updateSalePrice() {
+        const sel = $("#saleProd");
+        if (sel && sel.selectedOptions[0]) {
+          const price = sel.selectedOptions[0].getAttribute("data-price");
+          if (price) $("#salePrice").value = price;
         }
       }
 
-      async function addStoreSale() {
-        const productId = $("#saleProduct").value;
+      async function makeSale() {
+        const productId = $("#saleProd").value;
         const quantity = Number($("#saleQty").value);
-        const salePrice = Number($("#salePrice").value);
+        const unitPrice = Number($("#salePrice").value);
         const date = $("#saleDate").value || today();
-        const customer = $("#saleCustomer").value.trim();
+        const customer = $("#saleCust").value.trim();
         const note = $("#saleNote").value.trim();
-
-        if (!productId || quantity <= 0 || salePrice <= 0) {
-          alert("Məhsul, miqdar və qiymət (>0) vacibdir");
-          return;
-        }
-
+        if (!productId || quantity <= 0 || unitPrice <= 0) { alert("Məhsul, miqdar və qiymət (>0) vacibdir"); return; }
         try {
-          await apiPOST("/api/store-sales", {
-            date,
-            productId,
-            quantity,
-            salePrice,
-            customer,
-            note
-          });
-          await fetchStoreSales();
+          await apiPOST("/api/store-sales", { date, productId, quantity, unitPrice, customer, note });
           await fetchStoreStock();
+          await fetchSales();
           $("#saleQty").value = "";
-          $("#saleCustomer").value = "";
+          $("#saleCust").value = "";
           $("#saleNote").value = "";
         } catch (e) {}
       }
-
-      async function refreshAll() {
-        try {
-          await fetchMaterials();
-          await fetchStock();
-        } catch (e) {
-          console.warn("refreshAll error", e);
-        }
-      }
-
-      // start
-      document.addEventListener("DOMContentLoaded", async () => {
-        $("#baseUrl").textContent = BASE;
-        renderTabs();
-        renderView();
-        await refreshAll();
-      });
-
-    </script>
-  </body>
-</html>
