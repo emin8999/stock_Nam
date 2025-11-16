@@ -22,19 +22,12 @@ public class StoreTransferController {
     
     private final StoreTransferService storeTransferService;
     
-    // @GetMapping
-    // public ResponseEntity<List<StoreTransfer>> getAll() {
-    //     return ResponseEntity.ok(storeTransferService.findAll());
-    // }
-
     @GetMapping
-    public ResponseEntity<List<StoreTransferResponseDTO>> getAll() {
-    List<StoreTransferResponseDTO> list = storeTransferService.findAll()
-        .stream()
-        .map(storeTransferService::mapToDTO)
-        .collect(Collectors.toList());
-    return ResponseEntity.ok(list);
+    public ResponseEntity<List<StoreTransfer>> getAll() {
+        return ResponseEntity.ok(storeTransferService.findAll());
     }
+
+    
     
     @GetMapping("/date-range")
     public ResponseEntity<List<StoreTransfer>> getByDateRange(

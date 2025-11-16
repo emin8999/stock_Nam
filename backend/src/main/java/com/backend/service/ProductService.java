@@ -5,8 +5,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.backend.entity.Product;
+import com.backend.entity.WarehouseStock;
 import com.backend.repository.ProductRepository;
+import com.backend.repository.WarehouseStockRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -14,6 +17,7 @@ import java.util.List;
 public class ProductService {
     
     private final ProductRepository productRepository;
+    private final WarehouseStockRepository warehouseStockRepository;
     
     public List<Product> findAll() {
         return productRepository.findAll();
@@ -28,11 +32,24 @@ public class ProductService {
             .orElseThrow(() -> new RuntimeException("Product not found: " + id));
     }
     
+    // @Transactional
+    // public Product create(Product product) {
+    //     return productRepository.save(product);
+    // }
+    
     @Transactional
     public Product create(Product product) {
-        return productRepository.save(product);
-    }
+    Product saved = productRepository.save(product);
+
     
+    WarehouseStock warehouseStock = new WarehouseStock();
+    warehouseStock.setProductId(saved.getId());
+    warehouseStock.setQuantity(BigDecimal.ZERO);  
+    warehouseStockRepository.save(warehouseStock);
+
+    return saved;
+    
+    }
     @Transactional
     public Product update(String id, Product product) {
         Product existing = findById(id);
