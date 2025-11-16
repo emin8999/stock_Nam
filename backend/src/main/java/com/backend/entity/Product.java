@@ -29,6 +29,9 @@ public class Product {
     
     @Column(name = "sale_price", nullable = false)
     private BigDecimal salePrice; 
+
+    @Column(name = "initial_quantity")  
+    private BigDecimal initialQuantity = BigDecimal.ZERO;
     
     @Column(name = "is_active")
     private Boolean isActive = true;

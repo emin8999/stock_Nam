@@ -5,9 +5,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.backend.dto.QuantityUpdateRequest;
 import com.backend.entity.Product;
 import com.backend.service.ProductService;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -39,11 +41,20 @@ public class ProductController {
             .body(productService.create(product));
     }
     
-    @PutMapping("/{id}")
-    public ResponseEntity<Product> update(@PathVariable String id, @RequestBody Product product) {
-        return ResponseEntity.ok(productService.update(id, product));
+     @PutMapping("/{id}/quantity")
+    public ResponseEntity<Product> updateQuantity(
+            @PathVariable String id,
+            @RequestBody QuantityUpdateRequest request) {
+        
+        if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) < 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        Product updated = productService.updateProductQuantity(id, request.getQuantity());
+        return ResponseEntity.ok(updated);
     }
-    
+
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         productService.delete(id);

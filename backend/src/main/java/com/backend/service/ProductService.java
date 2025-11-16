@@ -50,6 +50,28 @@ public class ProductService {
     return saved;
     
     }
+
+    @Transactional
+    public Product updateProductQuantity(String productId, BigDecimal newQuantity) {
+       
+        Product product = productRepository.findById(productId)
+            .orElseThrow(() -> new RuntimeException("Məhsul tapılmadı: " + productId));
+        
+      
+        product.setInitialQuantity(newQuantity);
+        Product savedProduct = productRepository.save(product);
+        
+       
+        WarehouseStock stock = warehouseStockRepository.findByProductId(productId)
+            .orElse(new WarehouseStock(null, productId, BigDecimal.ZERO));
+        
+        stock.setQuantity(newQuantity);
+        warehouseStockRepository.save(stock);
+        
+        return savedProduct;
+    }
+
+
     @Transactional
     public Product update(String id, Product product) {
         Product existing = findById(id);
