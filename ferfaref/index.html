@@ -338,24 +338,50 @@
         ).join("");
       }
       
-      function switchTab(id) {
+      async function switchTab(id) {
         currentTab = id;
         renderTabs();
+        
+        // Loading göstər
+        $("#view").innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div class="loader"></div><div style="margin-top:12px;">Yüklənir...</div></div>';
+        
+        try {
+          // avtomatik fetch - AWAIT ilə
+          if (id === "materials") {
+            await fetchMaterials();
+          } else if (id === "receipt") { 
+            await Promise.all([fetchMaterials(), fetchReceipts()]);
+          } else if (id === "issue") { 
+            await Promise.all([fetchMaterials(), fetchIssues()]);
+          } else if (id === "stock") {
+            await fetchStock();
+          } else if (id === "products") {
+            await fetchProducts();
+          } else if (id === "production") { 
+            await Promise.all([fetchProducts(), fetchMaterials(), fetchProduction()]);
+          } else if (id === "prodstock") {
+            await fetchProductionStock();
+          } else if (id === "storetransfer") { 
+            // ÖNCə data fetch et, SONRA render et
+            await Promise.all([fetchProducts(), fetchProductionStock(), fetchStoreTransfers()]);
+          } else if (id === "storestock") {
+            await fetchStoreStock();
+          } else if (id === "storesales") { 
+            await Promise.all([fetchProducts(), fetchStoreStock(), fetchStoreSales()]);
+          } else if (id === "finance") {
+            await fetchFinances();
+          } else if (id === "arap") {
+            await fetchARAP();
+          } else if (id === "reports") { 
+            await Promise.all([fetchMaterials(), fetchReceipts(), fetchIssues()]);
+            await fetchPL();
+          }
+        } catch (e) {
+          console.error("Tab yüklənmə xətası:", e);
+        }
+        
+        // Data yükləndi, indi render et
         renderView();
-        // avtomatik fetch
-        if (id === "materials") fetchMaterials();
-        else if (id === "receipt") { fetchMaterials(); fetchReceipts(); }
-        else if (id === "issue") { fetchMaterials(); fetchIssues(); }
-        else if (id === "stock") fetchStock();
-        else if (id === "products") fetchProducts();
-        else if (id === "production") { fetchProducts(); fetchMaterials(); fetchProduction(); }
-        else if (id === "prodstock") fetchProductionStock();
-        else if (id === "storetransfer") { fetchProducts(); fetchStoreTransfers(); fetchProductionStock(); }
-        else if (id === "storestock") fetchStoreStock();
-        else if (id === "storesales") { fetchProducts(); fetchStoreSales(); fetchStoreStock(); }
-        else if (id === "finance") fetchFinances();
-        else if (id === "arap") fetchARAP();
-        else if (id === "reports") { fetchMaterials(); fetchReceipts(); fetchIssues(); fetchPL(); }
       }
 
       // ====== API helpers ======
@@ -499,7 +525,7 @@
 
       async function fetchProduction() {
         try {
-          APP.production = await apiGET("/api/production");
+          APP.production = await apiGET("/api/products");
           if (currentTab === "production") renderProduction();
         } catch (e) {}
       }
@@ -507,8 +533,14 @@
       async function fetchProductionStock() {
         try {
           APP.productionStock = await apiGET("/api/warehouse-stock");
-          if (currentTab === "prodstock") renderProductionStock();
-        } catch (e) {}
+          console.log("Production Stock yükləndi:", APP.productionStock.length, "məhsul"); // Debug log
+          if (currentTab === "prodstock" || currentTab === "storetransfer") {
+            renderView();
+          }
+        } catch (e) {
+          console.error("Production stock fetch xətası:", e);
+          APP.productionStock = [];
+        }
       }
 
       async function fetchStoreTransfers() {
@@ -1326,10 +1358,47 @@
 
       // ====== STORE TRANSFER ======
       function renderStoreTransfer() {
+        console.log("renderStoreTransfer çağırıldı");
+        console.log("APP.productionStock:", APP.productionStock);
+        
+        // Boş array varsa, düzgün mesaj göstər
+        if (!APP.productionStock || APP.productionStock.length === 0) {
+          const productOptions = '<option value="">Hazırda anbar boşdur (məlumat yüklənir...)</option>';
+          
+          $("#view").innerHTML = `
+            <div class="grid cols-2">
+              <div class="card">
+                <div class="section-title">Mağazaya köçürmə</div>
+                <div style="padding:20px;text-align:center;color:#f59e0b;">
+                  ⚠️ İstehsal anbarı boşdur və ya məlumat yüklənir.<br>
+                  Əvvəlcə məhsul istehsal edin və ya səhifəni yeniləyin.
+                </div>
+                <div class="row wrap">
+                  <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct" disabled>${productOptions}</select></div>
+                  <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="trQty" type="number" step="1" disabled></div>
+                  <div style="flex:1 1 160px;"><label>Tarix</label><input id="trDate" type="date" value="${today()}" disabled></div>
+                </div>
+                <label>Qeyd</label><textarea id="trNote" disabled></textarea>
+                <div class="row" style="justify-content:space-between;margin-top:8px;">
+                  <button onclick="fetchProductionStock().then(() => renderStoreTransfer())">🔄 Yenilə</button>
+                  <button class="primary" disabled>Mağazaya köçür</button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="section-title">Köçürmə tarixçəsi</div>
+                <table>
+                  <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Maya/ədəd</th><th class="right">Cəm</th><th>Qeyd</th></tr></thead>
+                  <tbody><tr><td colspan="7" class="tiny">Transfer yoxdur</td></tr></tbody>
+                </table>
+              </div>
+            </div>`;
+          return;
+        }
+        
         const productOptions = (APP.productionStock || [])
           .filter(s => (s.quantity || 0) > 0)
           .map(s => `<option value="${s.productId}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd)</option>`)
-          .join("") || '<option value="">Hazırda anbar boşdur</option>';
+          .join("");
 
         const items = APP.storeTransfers.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
           .map(t => {
@@ -1349,12 +1418,13 @@
             <div class="card">
               <div class="section-title">Mağazaya köçürmə</div>
               <div class="row wrap">
-                <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct">${productOptions}</select></div>
+                <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct">${productOptions || '<option value="">Məhsul yoxdur</option>'}</select></div>
                 <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="trQty" type="number" step="1"></div>
                 <div style="flex:1 1 160px;"><label>Tarix</label><input id="trDate" type="date" value="${today()}"></div>
               </div>
               <label>Qeyd</label><textarea id="trNote"></textarea>
-              <div class="row" style="justify-content:flex-end;margin-top:8px;">
+              <div class="row" style="justify-content:space-between;margin-top:8px;">
+                <button onclick="fetchProductionStock().then(() => renderStoreTransfer())">🔄 Yenilə</button>
                 <button class="primary" onclick="addStoreTransfer()">Mağazaya köçür</button>
               </div>
             </div>
@@ -1386,12 +1456,26 @@
             quantity,
             note
           });
-          await fetchStoreTransfers();
-          await fetchProductionStock();
-          await fetchStoreStock();
+          
+          // Uğurlu transfer sonrası
+          alert("✅ Transfer uğurla həyata keçirildi!");
+          
+          // Bütün əlaqəli data-ları yenilə
+          await Promise.all([
+            fetchStoreTransfers(),
+            fetchProductionStock(),
+            fetchStoreStock()
+          ]);
+          
+          // View-ı yenilə
+          renderStoreTransfer();
+          
+          // Formu təmizlə
           $("#trQty").value = "";
           $("#trNote").value = "";
-        } catch (e) {}
+        } catch (e) {
+          console.error("Transfer xətası:", e);
+        }
       }
 
       // ====== STORE STOCK ======
@@ -1497,7 +1581,7 @@
             date,
             productId,
             quantity,
-            unitPrice: salePrice,
+            salePrice,
             customer,
             note
           });
