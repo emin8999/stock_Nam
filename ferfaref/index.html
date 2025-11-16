@@ -1472,6 +1472,7 @@
           await fetchStoreTransfers();
           await fetchProductionStock();
           await fetchStoreStock();
+          renderStoreTransfer()
           $("#trQty").value = "";
           $("#trNote").value = "";
         } catch (e) {}
