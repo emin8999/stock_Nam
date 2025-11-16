@@ -518,6 +518,7 @@
         try {
           APP.storeStock = await apiGET("/api/store-stock");
           if (currentTab === "store") renderStore();
+          if (currentTab === "transfer") renderTransfer();
         } catch (e) {}
       }
 
