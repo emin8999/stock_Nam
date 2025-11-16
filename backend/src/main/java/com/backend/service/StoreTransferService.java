@@ -36,26 +36,81 @@ public class StoreTransferService {
         return storeTransferRepository.findByDateBetween(from, to);
     }
     
+    // @Transactional
+    // public StoreTransfer create(StoreTransfer transfer) {
+       
+    //     WarehouseStock warehouseStock = warehouseStockRepository.findByProductId(transfer.getProductId())
+    //         .orElseThrow(() -> new RuntimeException("Məhsul anbarda yoxdur"));
+        
+    //     if (warehouseStock.getQuantity().compareTo(transfer.getQuantity()) < 0) {
+    //         throw new RuntimeException("Anbarda kifayət qədər məhsul yoxdur. Anbarda: " + warehouseStock.getQuantity());
+    //     }
+        
+    //     warehouseStock.setQuantity(warehouseStock.getQuantity().subtract(transfer.getQuantity()));
+    //     warehouseStockRepository.save(warehouseStock);
+        
+        
+    //     StoreStock storeStock = storeStockRepository.findByProductId(transfer.getProductId())
+    //         .orElse(new StoreStock(null, transfer.getProductId(), BigDecimal.ZERO));
+        
+    //     storeStock.setQuantity(storeStock.getQuantity().add(transfer.getQuantity()));
+    //     storeStockRepository.save(storeStock);
+        
+    //     return storeTransferRepository.save(transfer);
+    // }
+    // @Transactional
+    // public StoreTransfer createTransfer(StoreTransfer transfer) {
+    //     WarehouseStock warehouseStock = warehouseStockRepository.findByProductId(transfer.getProductId())
+    //         .orElseThrow(() -> new RuntimeException("İstehsal anbarında bu məhsul yoxdur"));
+        
+    //     if (warehouseStock.getQuantity().compareTo(transfer.getQuantity()) < 0) {
+    //         throw new RuntimeException(
+    //             String.format("İstehsal anbarında kifayət qədər məhsul yoxdur. " +
+    //                 "Anbar: %s, Tələb: %s", 
+    //                 warehouseStock.getQuantity(), 
+    //                 transfer.getQuantity())
+    //         );
+    //     }
+    //     warehouseStock.setQuantity(warehouseStock.getQuantity().subtract(transfer.getQuantity()));
+    //     warehouseStockRepository.save(warehouseStock);
+        
+        
+    //     StoreTransfer savedTransfer = storeTransferRepository.save(transfer);
+        
+    //     StoreStock storeStock = storeStockRepository.findByProductId(transfer.getProductId())
+    //         .orElse(new StoreStock(null, transfer.getProductId(), BigDecimal.ZERO));
+        
+    //     storeStock.setQuantity(storeStock.getQuantity().add(transfer.getQuantity()));
+    //     storeStockRepository.save(storeStock);
+        
+    //     return savedTransfer;
+    // }
+
     @Transactional
     public StoreTransfer create(StoreTransfer transfer) {
-       
+        
+        // İstehsal anbarından məhsulu tap
         WarehouseStock warehouseStock = warehouseStockRepository.findByProductId(transfer.getProductId())
             .orElseThrow(() -> new RuntimeException("Məhsul anbarda yoxdur"));
         
+        // Kifayət qədər məhsul olub-olmadığını yoxla
         if (warehouseStock.getQuantity().compareTo(transfer.getQuantity()) < 0) {
             throw new RuntimeException("Anbarda kifayət qədər məhsul yoxdur. Anbarda: " + warehouseStock.getQuantity());
         }
         
+        // İstehsal anbarından azalt
         warehouseStock.setQuantity(warehouseStock.getQuantity().subtract(transfer.getQuantity()));
         warehouseStockRepository.save(warehouseStock);
+        warehouseStockRepository.flush(); // ← ƏLAVƏ EDİN (DB-yə dərhal yazır)
         
-        
+        // Mağaza anbarına əlavə et
         StoreStock storeStock = storeStockRepository.findByProductId(transfer.getProductId())
             .orElse(new StoreStock(null, transfer.getProductId(), BigDecimal.ZERO));
         
         storeStock.setQuantity(storeStock.getQuantity().add(transfer.getQuantity()));
         storeStockRepository.save(storeStock);
         
+        // Transfer qeydini saxla
         return storeTransferRepository.save(transfer);
     }
     
