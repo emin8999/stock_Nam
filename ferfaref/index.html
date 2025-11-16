@@ -1408,48 +1408,67 @@
 
       // ====== STORE TRANSFER ======
       function renderStoreTransfer() {
-        const productOptions = (APP.productionStock || [])
-          .filter(s => s.quantity > 0)
-          .map(s => `<option value="${s.productId}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd)</option>`)
-          .join("");
+  const productOptions = (APP.productionStock || [])
+    .map(s => <option value="${s.productId}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd)</option>)
+    .join("");
 
-        const items = APP.storeTransfers.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(t => {
-            const prod = APP.products.find(p => p.id === t.productId) || {};
-            return `<tr>
-              <td>${t.date}</td>
-              <td>${prod.code || ""}</td>
-              <td>${prod.name || ""}</td>
-              <td class="right">${fmtN(t.quantity, 0)}</td>
-              <td class="right">${fmtMoney(t.costPerUnit)}</td>
-              <td class="right">${fmtMoney(t.totalCost)}</td>
-              <td class="tiny">${t.note || ""}</td>
-            </tr>`;
-          }).join("") || '<tr><td colspan="7" class="tiny">Transfer yoxdur</td></tr>';
+  const items = (APP.storeTransfers || [])
+    .slice()
+    .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+    .map(t => `<tr>
+      <td>${t.date}</td>
+      <td>${t.productCode || ""}</td>
+      <td>${t.productName || ""}</td>
+      <td class="right">${fmtN(t.quantity, 0)}</td>
+      <td class="right">${fmtMoney(t.costPerUnit || 0)}</td>
+      <td class="right">${fmtMoney(t.totalCost || 0)}</td>
+      <td class="tiny">${t.note || ""}</td>
+    </tr>`)
+    .join("") || '<tr><td colspan="7" class="tiny">Transfer yoxdur</td></tr>';
 
-        $("#view").innerHTML = `
-          <div class="grid cols-2">
-            <div class="card">
-              <div class="section-title">Mağazaya köçürmə</div>
-              <div class="row wrap">
-                <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct">${productOptions}</select></div>
-                <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="trQty" type="number" step="1"></div>
-                <div style="flex:1 1 160px;"><label>Tarix</label><input id="trDate" type="date" value="${today()}"></div>
-              </div>
-              <label>Qeyd</label><textarea id="trNote"></textarea>
-              <div class="row" style="justify-content:flex-end;margin-top:8px;">
-                <button class="primary" onclick="addStoreTransfer()">Mağazaya köçür</button>
-              </div>
-            </div>
-            <div class="card">
-              <div class="section-title">Köçürmə tarixçəsi</div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Maya/ədəd</th><th class="right">Cəm</th><th>Qeyd</th></tr></thead>
-                <tbody>${items}</tbody>
-              </table>
-            </div>
-          </div>`;
-      }
+  $("#view").innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="section-title">Mağazaya köçürmə</div>
+        <div class="row wrap">
+          <div style="flex:2 1 260px;">
+            <label>Məhsul</label>
+            <select id="trProduct">${productOptions}</select>
+          </div>
+          <div style="flex:1 1 120px;">
+            <label>Miqdar (ədəd)</label>
+            <input id="trQty" type="number" step="1">
+          </div>
+          <div style="flex:1 1 160px;">
+            <label>Tarix</label>
+            <input id="trDate" type="date" value="${today()}">
+          </div>
+        </div>
+        <label>Qeyd</label>
+        <textarea id="trNote"></textarea>
+        <div class="row" style="justify-content:flex-end;margin-top:8px;">
+          <button class="primary" onclick="addStoreTransfer()">Mağazaya köçür</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Köçürmə tarixçəsi</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Tarix</th>
+              <th>Kod</th>
+              <th>Məhsul</th>
+              <th class="right">Miqdar</th>
+              <th class="right">Maya/ədəd</th>
+              <th class="right">Cəm</th>
+              <th>Qeyd</th>
+            </tr>
+          </thead>
+          <tbody>${items}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
 
       async function addStoreTransfer() {
         const productId = $("#trProduct").value;

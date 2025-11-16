@@ -17,6 +17,7 @@ import com.backend.repository.WarehouseStockRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,6 +62,12 @@ public class StoreTransferService {
     @Transactional
     public void delete(String id) {
         storeTransferRepository.deleteById(id);
+    }
+
+     public List<StoreTransferResponseDTO> findAllDTO() {
+        return storeTransferRepository.findAll().stream()
+            .map(this::mapToDTO)
+            .collect(Collectors.toList());
     }
 
     public StoreTransferResponseDTO mapToDTO(StoreTransfer transfer) {
