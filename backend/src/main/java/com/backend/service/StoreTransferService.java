@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.backend.dto.StoreTransferResponseDTO;
+import com.backend.entity.Product;
 import com.backend.entity.StoreStock;
 import com.backend.entity.StoreTransfer;
 import com.backend.entity.WarehouseStock;
+import com.backend.repository.ProductRepository;
 import com.backend.repository.StoreStockRepository;
 import com.backend.repository.StoreTransferRepository;
 import com.backend.repository.WarehouseStockRepository;
@@ -22,6 +25,7 @@ public class StoreTransferService {
     private final StoreTransferRepository storeTransferRepository;
     private final WarehouseStockRepository warehouseStockRepository;
     private final StoreStockRepository storeStockRepository;
+    private final ProductRepository productRepository;
     
     public List<StoreTransfer> findAll() {
         return storeTransferRepository.findAll();
@@ -58,4 +62,20 @@ public class StoreTransferService {
     public void delete(String id) {
         storeTransferRepository.deleteById(id);
     }
+
+    public StoreTransferResponseDTO mapToDTO(StoreTransfer transfer) {
+    Product product = productRepository.findById(transfer.getProductId())
+        .orElseThrow(() -> new RuntimeException("Product not found"));
+
+    return new StoreTransferResponseDTO(
+        transfer.getId(),
+        transfer.getProductId(),
+        product.getCode(),
+        product.getName(),
+        product.getCategory(),
+        transfer.getQuantity(),
+        transfer.getDate(),
+        transfer.getNote()
+    );
+}
 }

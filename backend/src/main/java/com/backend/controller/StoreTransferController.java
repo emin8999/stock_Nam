@@ -6,11 +6,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.backend.dto.StoreTransferResponseDTO;
 import com.backend.entity.StoreTransfer;
 import com.backend.service.StoreTransferService;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/store-transfers")
@@ -20,9 +22,18 @@ public class StoreTransferController {
     
     private final StoreTransferService storeTransferService;
     
+    // @GetMapping
+    // public ResponseEntity<List<StoreTransfer>> getAll() {
+    //     return ResponseEntity.ok(storeTransferService.findAll());
+    // }
+
     @GetMapping
-    public ResponseEntity<List<StoreTransfer>> getAll() {
-        return ResponseEntity.ok(storeTransferService.findAll());
+    public ResponseEntity<List<StoreTransferResponseDTO>> getAll() {
+    List<StoreTransferResponseDTO> list = storeTransferService.findAll()
+        .stream()
+        .map(storeTransferService::mapToDTO)
+        .collect(Collectors.toList());
+    return ResponseEntity.ok(list);
     }
     
     @GetMapping("/date-range")
