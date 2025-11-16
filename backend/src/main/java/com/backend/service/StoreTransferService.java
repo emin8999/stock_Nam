@@ -89,28 +89,28 @@ public class StoreTransferService {
     @Transactional
     public StoreTransfer create(StoreTransfer transfer) {
         
-        // İstehsal anbarından məhsulu tap
+       
         WarehouseStock warehouseStock = warehouseStockRepository.findByProductId(transfer.getProductId())
             .orElseThrow(() -> new RuntimeException("Məhsul anbarda yoxdur"));
         
-        // Kifayət qədər məhsul olub-olmadığını yoxla
+     
         if (warehouseStock.getQuantity().compareTo(transfer.getQuantity()) < 0) {
             throw new RuntimeException("Anbarda kifayət qədər məhsul yoxdur. Anbarda: " + warehouseStock.getQuantity());
         }
         
-        // İstehsal anbarından azalt
+       
         warehouseStock.setQuantity(warehouseStock.getQuantity().subtract(transfer.getQuantity()));
         warehouseStockRepository.save(warehouseStock);
-        warehouseStockRepository.flush(); // ← ƏLAVƏ EDİN (DB-yə dərhal yazır)
+        warehouseStockRepository.flush(); 
         
-        // Mağaza anbarına əlavə et
+       
         StoreStock storeStock = storeStockRepository.findByProductId(transfer.getProductId())
             .orElse(new StoreStock(null, transfer.getProductId(), BigDecimal.ZERO));
         
         storeStock.setQuantity(storeStock.getQuantity().add(transfer.getQuantity()));
         storeStockRepository.save(storeStock);
         
-        // Transfer qeydini saxla
+      
         return storeTransferRepository.save(transfer);
     }
     
