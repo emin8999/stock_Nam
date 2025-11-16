@@ -596,7 +596,7 @@
 
       async function fetchProductionStock() {
         try {
-          APP.productionStock = await apiGET("/api/warehouse-stock");
+          APP.productionStock = await apiGET("/api/products");
           if (currentTab === "prodstock") renderProductionStock();
         } catch (e) {}
       }
