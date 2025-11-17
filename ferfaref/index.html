@@ -1170,21 +1170,28 @@
       }
 
       // ====== PRODUCTS ======
-      function renderProducts() {
-        const list = APP.products.map(x => `
+     function renderProducts() {
+        const list = APP.products.map(x => {
+          const unitPrice = x.unitPrice || x.salePrice || 0;
+          const quantity = x.initialQuantity || 0;
+          const total = unitPrice * quantity;
+          
+          return `
           <tr>
             <td>${x.code || ""}</td>
             <td>${x.name || ""}</td>
             <td class="tiny">${x.description || ""}</td>
             <td>${x.category || ""}</td>
-            <td class="right">${fmtMoney(x.unitPrice || x.salePrice || 0)}</td>
+            <td class="right">${fmtMoney(unitPrice)}</td>
             <td class="right">
-              <input type="number" step="1" min="0" value="${x.initialQuantity || 0}" 
+              <input type="number" step="1" min="0" value="${quantity}" 
                      id="qty_${x.id}" style="width:80px;padding:4px;" 
                      onchange="updateProductQuantity('${x.id}', this.value)">
             </td>
+            <td class="right">${fmtMoney(total)}</td>
             <td>${x.isActive === false ? '<span class="badge warn">arxiv</span>' : '<span class="badge ok">aktiv</span>'}</td>
-          </tr>`).join("") || '<tr><td colspan="7" class="tiny">Məhsul yoxdur</td></tr>';
+          </tr>`;
+        }).join("") || '<tr><td colspan="8" class="tiny">Məhsul yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -1205,7 +1212,7 @@
             <div class="card">
               <div class="section-title">Məhsullar</div>
               <table>
-                <thead><tr><th>Kod</th><th>Ad</th><th>Təsvir</th><th>Kateqoriya</th><th class="right">Satış qiyməti</th><th class="right">Miqdar</th><th>Status</th></tr></thead>
+                <thead><tr><th>Kod</th><th>Ad</th><th>Təsvir</th><th>Kateqoriya</th><th class="right">Satış qiyməti</th><th class="right">Miqdar</th><th class="right">Total</th><th>Status</th></tr></thead>
                 <tbody>${list}</tbody>
               </table>
             </div>
@@ -1262,84 +1269,137 @@
 
       // ====== STORE TRANSFER ======
       function renderStoreTransfer() {
-        console.log("renderStoreTransfer çağırıldı");
-        console.log("APP.productionStock:", APP.productionStock);
-        
-        if (!APP.productionStock || APP.productionStock.length === 0) {
-          const productOptions = '<option value="">Hazırda anbar boşdur (məlumat yüklənir...)</option>';
-          
-          $("#view").innerHTML = `
-            <div class="grid cols-2">
-              <div class="card">
-                <div class="section-title">Mağazaya köçürmə</div>
-                <div style="padding:20px;text-align:center;color:#f59e0b;">
-                  ⚠️ İstehsal anbarı boşdur və ya məlumat yüklənir.<br>
-                  Əvvəlcə məhsul istehsal edin və ya səhifəni yeniləyin.
-                </div>
-                <div class="row wrap">
-                  <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct" disabled>${productOptions}</select></div>
-                  <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="trQty" type="number" step="1" disabled></div>
-                  <div style="flex:1 1 160px;"><label>Tarix</label><input id="trDate" type="date" value="${today()}" disabled></div>
-                </div>
-                <label>Qeyd</label><textarea id="trNote" disabled></textarea>
-                <div class="row" style="justify-content:space-between;margin-top:8px;">
-                  <button onclick="fetchProductionStock().then(() => renderStoreTransfer())">🔄 Yenilə</button>
-                  <button class="primary" disabled>Mağazaya köçür</button>
-                </div>
-              </div>
-              <div class="card">
-                <div class="section-title">Köçürmə tarixçəsi</div>
-                <table>
-                  <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Maya/ədəd</th><th class="right">Cəm</th><th>Qeyd</th></tr></thead>
-                  <tbody><tr><td colspan="7" class="tiny">Transfer yoxdur</td></tr></tbody>
-                </table>
-              </div>
-            </div>`;
-          return;
-        }
-        
-        const productOptions = (APP.productionStock || [])
-          .filter(s => (s.quantity || 0) > 0)
-          .map(s => `<option value="${s.productId}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd)</option>`)
-          .join("");
+  console.log("renderStoreTransfer çağırıldı");
+  console.log("APP.productionStock:", APP.productionStock);
+  
+  if (!APP.productionStock || APP.productionStock.length === 0) {
+    const productOptions = '<option value="">Hazırda anbar boşdur (məlumat yüklənir...)</option>';
+    
+    $("#view").innerHTML = `
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="section-title">Mağazaya köçürmə</div>
+          <div style="padding:20px;text-align:center;color:#f59e0b;">
+            ⚠️ İstehsal anbarı boşdur və ya məlumat yüklənir.<br>
+            Əvvəlcə məhsul istehsal edin və ya səhifəni yeniləyin.
+          </div>
+          <div class="row wrap">
+            <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct" disabled>${productOptions}</select></div>
+            <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="trQty" type="number" step="1" disabled></div>
+            <div style="flex:1 1 140px;"><label>1 ədəd maya (₼)</label><input id="trCost" type="number" step="0.01" disabled></div>
+            <div style="flex:1 1 160px;"><label>Tarix</label><input id="trDate" type="date" value="${today()}" disabled></div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div style="flex:1;"><label>Cəm maya dəyəri</label><input id="trTotal" type="text" disabled value="₼ 0.00"></div>
+          </div>
+          <label>Qeyd</label><textarea id="trNote" disabled></textarea>
+          <div class="row" style="justify-content:space-between;margin-top:8px;">
+            <button onclick="fetchProductionStock().then(() => renderStoreTransfer())">🔄 Yenilə</button>
+            <button class="primary" disabled>Mağazaya köçür</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Köçürmə tarixçəsi</div>
+          <table>
+            <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Maya/ədəd</th><th class="right">Cəm</th><th>Qeyd</th></tr></thead>
+            <tbody><tr><td colspan="7" class="tiny">Transfer yoxdur</td></tr></tbody>
+          </table>
+        </div>
+      </div>`;
+    return;
+  }
+  
+  const productOptions = (APP.productionStock || [])
+    .filter(s => (s.quantity || 0) > 0)
+    .map(s => {
+     
+      const product = APP.products.find(p => p.id === s.productId) || {};
+      const salePrice = product.unitPrice || product.salePrice || 0;
+      return `<option value="${s.productId}" data-saleprice="${salePrice}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd - Satış: ${fmtMoney(salePrice)})</option>`;
+    })
+    .join("");
 
-        const items = APP.storeTransfers.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(t => {
-            return `<tr>
-              <td>${t.date}</td>
-              <td>${t.productCode || ""}</td>
-              <td>${t.productName || ""}</td>
-              <td class="right">${fmtN(t.quantity, 0)}</td>
-              <td class="right">${fmtMoney(t.costPerUnit)}</td>
-              <td class="right">${fmtMoney(t.totalCost)}</td>
-              <td class="tiny">${t.note || ""}</td>
-            </tr>`;
-          }).join("") || '<tr><td colspan="7" class="tiny">Transfer yoxdur</td></tr>';
+  const items = APP.storeTransfers.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
+    .map(t => {
+      
+      const product = APP.products.find(p => p.id === t.productId) || {};
+      const costPerUnit = product.unitPrice || product.salePrice || t.costPerUnit || 0;
+      const totalCost = costPerUnit * (t.quantity || 0);
+      
+      return `<tr>
+        <td>${t.date}</td>
+        <td>${t.productCode || ""}</td>
+        <td>${t.productName || ""}</td>
+        <td class="right">${fmtN(t.quantity, 0)}</td>
+        <td class="right">${fmtMoney(costPerUnit)}</td>
+        <td class="right">${fmtMoney(totalCost)}</td>
+        <td class="tiny">${t.note || ""}</td>
+      </tr>`;
+    }).join("") || '<tr><td colspan="7" class="tiny">Transfer yoxdur</td></tr>';
 
-        $("#view").innerHTML = `
-          <div class="grid cols-2">
-            <div class="card">
-              <div class="section-title">Mağazaya köçürmə</div>
-              <div class="row wrap">
-                <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct">${productOptions || '<option value="">Məhsul yoxdur</option>'}</select></div>
-                <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="trQty" type="number" step="1"></div>
-                <div style="flex:1 1 160px;"><label>Tarix</label><input id="trDate" type="date" value="${today()}"></div>
-              </div>
-              <label>Qeyd</label><textarea id="trNote"></textarea>
-              <div class="row" style="justify-content:space-between;margin-top:8px;">
-                <button onclick="fetchProductionStock().then(() => renderStoreTransfer())">🔄 Yenilə</button>
-                <button class="primary" onclick="addStoreTransfer()">Mağazaya köçür</button>
-              </div>
-            </div>
-            <div class="card">
-              <div class="section-title">Köçürmə tarixçəsi</div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Maya/ədəd</th><th class="right">Cəm</th><th>Qeyd</th></tr></thead>
-                <tbody>${items}</tbody>
-              </table>
-            </div>
-          </div>`;
-      }
+  $("#view").innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="section-title">Mağazaya köçürmə</div>
+        <div class="row wrap">
+          <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct">${productOptions || '<option value="">Məhsul yoxdur</option>'}</select></div>
+          <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="trQty" type="number" step="1" value="0"></div>
+          <div style="flex:1 1 140px;"><label>1 ədəd maya (₼)</label><input id="trCost" type="number" step="0.01" value="0"></div>
+          <div style="flex:1 1 160px;"><label>Tarix</label><input id="trDate" type="date" value="${today()}"></div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div style="flex:1;"><label>Cəm maya dəyəri</label><input id="trTotal" type="text" readonly value="₼ 0.00" style="font-weight:700;font-size:16px;background:#1a2332;"></div>
+        </div>
+        <label>Qeyd</label><textarea id="trNote"></textarea>
+        <div class="row" style="justify-content:space-between;margin-top:8px;">
+          <button onclick="fetchProductionStock().then(() => renderStoreTransfer())">🔄 Yenilə</button>
+          <button class="primary" onclick="addStoreTransfer()">Mağazaya köçür</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Köçürmə tarixçəsi</div>
+        <table>
+          <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Maya/ədəd</th><th class="right">Cəm</th><th>Qeyd</th></tr></thead>
+          <tbody>${items}</tbody>
+        </table>
+      </div>
+    </div>`;
+  
+
+  function updateTransferTotal() {
+    const qtyInput = document.getElementById("trQty");
+    const costInput = document.getElementById("trCost");
+    const totalInput = document.getElementById("trTotal");
+    
+    if (!qtyInput || !costInput || !totalInput) return;
+    
+    const costPerUnit = Number(costInput.value || 0);
+    const quantity = Number(qtyInput.value || 0);
+    const total = costPerUnit * quantity;
+    
+    totalInput.value = fmtMoney(total);
+  }
+  
+  
+  document.getElementById("trProduct").addEventListener("change", function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const salePrice = Number(selectedOption.getAttribute("data-saleprice") || 0);
+    document.getElementById("trCost").value = salePrice.toFixed(2);
+    updateTransferTotal();
+  });
+  
+ 
+  document.getElementById("trQty").addEventListener("input", updateTransferTotal);
+  document.getElementById("trCost").addEventListener("input", updateTransferTotal);
+  
+  
+  const firstOption = document.getElementById("trProduct").options[0];
+  if (firstOption) {
+    const salePrice = Number(firstOption.getAttribute("data-saleprice") || 0);
+    document.getElementById("trCost").value = salePrice.toFixed(2);
+  }
+  updateTransferTotal();
+}
 
       async function addStoreTransfer() {
         const productId = $("#trProduct").value;
@@ -1378,90 +1438,128 @@
       }
 
       // ====== STORE STOCK ======
-      function renderStoreStock() {
-        const rows = (APP.storeStock || []).map(s => {
-          return `<tr>
-            <td>${s.productCode || ""}</td>
-            <td>${s.productName || ""}</td>
-            <td class="right">${fmtN(s.quantity, 0)}</td>
-            <td class="right">${fmtMoney(s.avgCost)}</td>
-            <td class="right">${fmtMoney(s.unitPrice)}</td>
-            <td class="right">${fmtMoney(s.totalValue)}</td>
-          </tr>`;
-        }).join("") || '<tr><td colspan="6" class="tiny">Mağaza anbarında məhsul yoxdur</td></tr>';
+   function renderStoreStock() {
+  const rows = (APP.storeStock || []).map(s => {
+    // Məhsulun satış qiymətini maya kimi götürürük
+    const product = APP.products.find(p => p.id === s.productId) || {};
+    const costPerUnit = product.unitPrice || product.salePrice || s.avgCost || 0;
+    const quantity = s.quantity || 0;
+    
+    // Dəyər = Maya qiyməti × Miqdar
+    const totalValue = costPerUnit * quantity;
+    
+    return `<tr>
+      <td>${s.productCode || ""}</td>
+      <td>${s.productName || ""}</td>
+      <td class="right">${fmtN(quantity, 0)}</td>
+      <td class="right">${fmtMoney(costPerUnit)}</td>
+      <td class="right">${fmtMoney(totalValue)}</td>
+    </tr>`;
+  }).join("") || '<tr><td colspan="5" class="tiny">Mağaza anbarında məhsul yoxdur</td></tr>';
 
-        $("#view").innerHTML = `
-          <div class="card">
-            <div class="section-title">Mağaza anbarı</div>
-            <table>
-              <thead><tr><th>Kod</th><th>Məhsul</th><th class="right">Miqdar (ədəd)</th><th class="right">Orta maya</th><th class="right">Satış qiyməti</th><th class="right">Dəyər</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>`;
-      }
+  $("#view").innerHTML = `
+    <div class="card">
+      <div class="section-title">Mağaza anbarı</div>
+      <table>
+        <thead><tr>
+          <th>Kod</th>
+          <th>Məhsul</th>
+          <th class="right">Miqdar (ədəd)</th>
+          <th class="right">1 ədəd maya (₼)</th>
+          <th class="right">Dəyər (₼)</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
 
+     
       // ====== STORE SALES ======
-      function renderStoreSales() {
-        const productOptions = (APP.storeStock || [])
-          .filter(s => s.quantity > 0)
-          .map(s => `<option value="${s.productId}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd - ${fmtMoney(s.unitPrice)})</option>`)
-          .join("");
+function renderStoreSales() {
+  const productOptions = (APP.storeStock || [])
+    .filter(s => s.quantity > 0)
+    .map(s => `<option value="${s.productId}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd - ${fmtMoney(s.unitPrice)})</option>`)
+    .join("");
 
-        const items = APP.storeSales.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(sale => {
-            const prod = APP.products.find(p => p.id === sale.productId) || {};
-            return `<tr>
-              <td>${sale.date}</td>
-              <td>${prod.code || ""}</td>
-              <td>${prod.name || ""}</td>
-              <td class="right">${fmtN(sale.quantity, 0)}</td>
-              <td class="right">${fmtMoney(sale.salePrice)}</td>
-              <td class="right">${fmtMoney(sale.totalRevenue)}</td>
-              <td class="right">${fmtMoney(sale.profit)}</td>
-              <td>${sale.customer || ""}</td>
-              <td class="tiny">${sale.note || ""}</td>
-            </tr>`;
-          }).join("") || '<tr><td colspan="9" class="tiny">Satış yoxdur</td></tr>';
+  const items = APP.storeSales.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
+    .map(sale => {
+      const prod = APP.products.find(p => p.id === sale.productId) || {};
+      
+     
+      const salePrice = sale.unitPrice || 0;
+      const quantity = sale.quantity || 0;
+      
+      const revenue = salePrice * quantity;
+      
+      const costPerUnit = prod.unitPrice || prod.salePrice || 0;
+      const expense = costPerUnit * quantity;
+      
+      
+      const profit = revenue - expense;
+      
+      return `<tr>
+        <td>${sale.date}</td>
+        <td>${prod.code || ""}</td>
+        <td>${prod.name || ""}</td>
+        <td class="right">${fmtN(quantity, 0)}</td>
+        <td class="right">${fmtMoney(salePrice)}</td>
+        <td class="right">${fmtMoney(revenue)}</td>
+        <td class="right">${fmtMoney(expense)}</td>
+        <td class="right">${fmtMoney(profit)}</td>
+        <td>${sale.customer || ""}</td>
+        <td class="tiny">${sale.note || ""}</td>
+      </tr>`;
+    }).join("") || '<tr><td colspan="10" class="tiny">Satış yoxdur</td></tr>';
 
-        $("#view").innerHTML = `
-          <div class="grid cols-2">
-            <div class="card">
-              <div class="section-title">Satış</div>
-              <div class="row wrap">
-                <div style="flex:2 1 200px;"><label>Məhsul</label><select id="saleProduct">${productOptions}</select></div>
-                <div style="flex:1 1 100px;"><label>Miqdar</label><input id="saleQty" type="number" step="1"></div>
-                <div style="flex:1 1 140px;"><label>Satış qiyməti (₼)</label><input id="salePrice" type="number" step="0.01"></div>
-                <div style="flex:1 1 160px;"><label>Tarix</label><input id="saleDate" type="date" value="${today()}"></div>
-                <div style="flex:2 1 200px;"><label>Müştəri</label><input id="saleCustomer" placeholder="Müştəri adı"></div>
-              </div>
-              <label>Qeyd</label><textarea id="saleNote"></textarea>
-              <div class="row" style="justify-content:flex-end;margin-top:8px;">
-                <button class="primary" onclick="addStoreSale()">Satış et</button>
-              </div>
-            </div>
-            <div class="card">
-              <div class="section-title">Satış tarixçəsi</div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Qiymət</th><th class="right">Gəlir</th><th class="right">Mənfəət</th><th>Müştəri</th><th>Qeyd</th></tr></thead>
-                <tbody>${items}</tbody>
-              </table>
-            </div>
-          </div>`;
-        
-        $("#saleProduct").addEventListener("change", function() {
-          const prodId = this.value;
-          const prod = APP.products.find(p => p.id === prodId);
-          if (prod) {
-            $("#salePrice").value = prod.unitPrice || prod.salePrice || 0;
-          }
-        });
-        
-        if (APP.products.length && $("#saleProduct").value) {
-          const prod = APP.products.find(p => p.id === $("#saleProduct").value);
-          if (prod) $("#salePrice").value = prod.unitPrice || prod.salePrice || 0;
-        }
-      }
-
+  $("#view").innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="section-title">Satış</div>
+        <div class="row wrap">
+          <div style="flex:2 1 200px;"><label>Məhsul</label><select id="saleProduct">${productOptions}</select></div>
+          <div style="flex:1 1 100px;"><label>Miqdar</label><input id="saleQty" type="number" step="1"></div>
+          <div style="flex:1 1 140px;"><label>Satış qiyməti (₼)</label><input id="salePrice" type="number" step="0.01"></div>
+          <div style="flex:1 1 160px;"><label>Tarix</label><input id="saleDate" type="date" value="${today()}"></div>
+          <div style="flex:2 1 200px;"><label>Müştəri</label><input id="saleCustomer" placeholder="Müştəri adı"></div>
+        </div>
+        <label>Qeyd</label><textarea id="saleNote"></textarea>
+        <div class="row" style="justify-content:flex-end;margin-top:8px;">
+          <button class="primary" onclick="addStoreSale()">Satış et</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Satış tarixçəsi</div>
+        <table>
+          <thead><tr>
+            <th>Tarix</th>
+            <th>Kod</th>
+            <th>Məhsul</th>
+            <th class="right">Miqdar</th>
+            <th class="right">Qiymət</th>
+            <th class="right">Gəlir</th>
+            <th class="right">Xərc</th>
+            <th class="right">Mənfəət</th>
+            <th>Müştəri</th>
+            <th>Qeyd</th>
+          </tr></thead>
+          <tbody>${items}</tbody>
+        </table>
+      </div>
+    </div>`;
+  
+  $("#saleProduct").addEventListener("change", function() {
+    const prodId = this.value;
+    const prod = APP.products.find(p => p.id === prodId);
+    if (prod) {
+      $("#salePrice").value = prod.unitPrice || prod.salePrice || 0;
+    }
+  });
+  
+  if (APP.products.length && $("#saleProduct").value) {
+    const prod = APP.products.find(p => p.id === $("#saleProduct").value);
+    if (prod) $("#salePrice").value = prod.unitPrice || prod.salePrice || 0;
+  }
+}
       async function addStoreSale() {
         const productId = $("#saleProduct").value;
         const quantity = Number($("#saleQty").value);
