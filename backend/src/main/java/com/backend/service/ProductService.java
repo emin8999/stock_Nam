@@ -32,11 +32,6 @@ public class ProductService {
             .orElseThrow(() -> new RuntimeException("Product not found: " + id));
     }
     
-    // @Transactional
-    // public Product create(Product product) {
-    //     return productRepository.save(product);
-    // }
-    
     @Transactional
     public Product create(Product product) {
     Product saved = productRepository.save(product);
@@ -44,7 +39,7 @@ public class ProductService {
     
     WarehouseStock warehouseStock = new WarehouseStock();
     warehouseStock.setProductId(saved.getId());
-    warehouseStock.setQuantity(BigDecimal.ZERO);  
+    warehouseStock.setQuantity(saved.getInitialQuantity());  
     warehouseStockRepository.save(warehouseStock);
 
     return saved;
