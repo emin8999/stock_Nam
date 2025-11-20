@@ -1402,41 +1402,49 @@
   updateTransferTotal();
 }
 
-      async function addStoreTransfer() {
-        const productId = $("#trProduct").value;
-        const quantity = Number($("#trQty").value);
-        const date = $("#trDate").value || today();
-        const note = $("#trNote").value.trim();
+async function addStoreTransfer() {
+  const productId = $("#trProduct").value;
+  const quantity = Number($("#trQty").value);
+  const date = $("#trDate").value || today();
+  const note = $("#trNote").value.trim();
 
-        if (!productId || quantity <= 0) {
-          alert("Məhsul və miqdar (>0) vacibdir");
-          return;
-        }
+  if (!productId || quantity <= 0) {
+    alert("Məhsul və miqdar (>0) vacibdir");
+    return;
+  }
 
-        try {
-          await apiPOST("/api/store-transfers", {
-            date,
-            productId,
-            quantity,
-            note
-          });
-          
-          alert("✅ Transfer uğurla həyata keçirildi!");
-          
-          await Promise.all([
-            fetchStoreTransfers(),
-            fetchProductionStock(),
-            fetchStoreStock()
-          ]);
-          
-          renderStoreTransfer();
-          
-          $("#trQty").value = "";
-          $("#trNote").value = "";
-        } catch (e) {
-          console.error("Transfer xətası:", e);
-        }
-      }
+  // Frontend validasiya - products-daki initialQuantity-yə bax
+  const product = APP.products.find(p => p.id === productId);
+  if (!product || (product.initialQuantity || 0) < quantity) {
+    const available = product ? (product.initialQuantity || 0) : 0;
+    alert(`⚠️ Kifayət qədər məhsul yoxdur!\nMövcud: ${available} ədəd\nİstədiyiniz: ${quantity} ədəd`);
+    return;
+  }
+
+  try {
+    await apiPOST("/api/store-transfers", {
+      date,
+      productId,
+      quantity,
+      note
+    });
+    
+    alert("✅ Transfer uğurla həyata keçirildi!");
+    
+    await Promise.all([
+      fetchStoreTransfers(),
+      fetchProductionStock(),
+      fetchStoreStock()
+    ]);
+    
+    renderStoreTransfer();
+    
+    $("#trQty").value = "";
+    $("#trNote").value = "";
+  } catch (e) {
+    console.error("Transfer xətası:", e);
+  }
+}
 
       // ====== STORE STOCK ======
    function renderStoreStock() {
