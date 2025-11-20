@@ -1268,25 +1268,34 @@
       }
 
       // ====== STORE TRANSFER ======
-      function renderStoreTransfer() {
+    function renderStoreTransfer() {
   console.log("renderStoreTransfer çağırıldı");
-  console.log("APP.products:", APP.products);
+  console.log("APP.productionStock:", APP.productionStock);
   
-  // Aktiv məhsulları göstər (miqdar 0 olsa da)
-  const availableProducts = (APP.products || []).filter(p => {
-    return p.isActive !== false;
-  });
+  // Əgər productionStock boşdursa, products-dan istifadə et
+  let availableStock = APP.productionStock || [];
   
-  if (!availableProducts || availableProducts.length === 0) {
-    const productOptions = '<option value="">Hazırda anbar boşdur (məlumat yüklənir...)</option>';
+  // Əgər productionStock yoxdursa, products-dan yaradaq
+  if (availableStock.length === 0 && APP.products.length > 0) {
+    availableStock = APP.products
+      .filter(p => p.isActive !== false)
+      .map(p => ({
+        productId: p.id,
+        productCode: p.code,
+        productName: p.name,
+        quantity: p.initialQuantity || p.quantity || 0
+      }));
+  }
+  
+  if (!availableStock || availableStock.length === 0) {
+    const productOptions = '<option value="">Hazırda anbar boşdur</option>';
     
     $("#view").innerHTML = `
       <div class="grid cols-2">
         <div class="card">
           <div class="section-title">Mağazaya köçürmə</div>
           <div style="padding:20px;text-align:center;color:#f59e0b;">
-            ⚠️ İstehsal anbarı boşdur və ya məlumat yüklənir.<br>
-            Əvvəlcə məhsul istehsal edin və ya səhifəni yeniləyin.
+            ⚠️ Məhsul yoxdur. Əvvəlcə məhsul əlavə edin.
           </div>
           <div class="row wrap">
             <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct" disabled>${productOptions}</select></div>
@@ -1294,12 +1303,9 @@
             <div style="flex:1 1 140px;"><label>1 ədəd maya (₼)</label><input id="trCost" type="number" step="0.01" disabled></div>
             <div style="flex:1 1 160px;"><label>Tarix</label><input id="trDate" type="date" value="${today()}" disabled></div>
           </div>
-          <div class="row" style="margin-top:8px;">
-            <div style="flex:1;"><label>Cəm maya dəyəri</label><input id="trTotal" type="text" disabled value="₼ 0.00"></div>
-          </div>
           <label>Qeyd</label><textarea id="trNote" disabled></textarea>
           <div class="row" style="justify-content:space-between;margin-top:8px;">
-            <button onclick="fetchProductionStock().then(() => renderStoreTransfer())">🔄 Yenilə</button>
+            <button onclick="fetchProducts().then(() => renderStoreTransfer())">🔄 Yenilə</button>
             <button class="primary" disabled>Mağazaya köçür</button>
           </div>
         </div>
@@ -1314,17 +1320,16 @@
     return;
   }
   
- const productOptions = availableProducts
-  .map(p => {
-    const qty = p.initialQuantity || p.quantity || 0;
-    const salePrice = p.unitPrice || p.salePrice || 0;
-    return `<option value="${p.id}" data-saleprice="${salePrice}">${p.code} — ${p.name} (${fmtN(qty, 0)} ədəd - Satış: ${fmtMoney(salePrice)})</option>`;
-  })
-  .join("");
+  const productOptions = availableStock
+    .map(s => {
+      const product = APP.products.find(p => p.id === s.productId) || {};
+      const salePrice = product.unitPrice || product.salePrice || 0;
+      return `<option value="${s.productId}" data-saleprice="${salePrice}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd - Satış: ${fmtMoney(salePrice)})</option>`;
+    })
+    .join("");
 
   const items = APP.storeTransfers.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
     .map(t => {
-      
       const product = APP.products.find(p => p.id === t.productId) || {};
       const costPerUnit = product.unitPrice || product.salePrice || t.costPerUnit || 0;
       const totalCost = costPerUnit * (t.quantity || 0);
@@ -1345,7 +1350,7 @@
       <div class="card">
         <div class="section-title">Mağazaya köçürmə</div>
         <div class="row wrap">
-          <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct">${productOptions || '<option value="">Məhsul yoxdur</option>'}</select></div>
+          <div style="flex:2 1 260px;"><label>Məhsul</label><select id="trProduct">${productOptions}</select></div>
           <div style="flex:1 1 120px;"><label>Miqdar (ədəd)</label><input id="trQty" type="number" step="1" value="0"></div>
           <div style="flex:1 1 140px;"><label>1 ədəd maya (₼)</label><input id="trCost" type="number" step="0.01" value="0"></div>
           <div style="flex:1 1 160px;"><label>Tarix</label><input id="trDate" type="date" value="${today()}"></div>
@@ -1355,7 +1360,7 @@
         </div>
         <label>Qeyd</label><textarea id="trNote"></textarea>
         <div class="row" style="justify-content:space-between;margin-top:8px;">
-         <button onclick="fetchProducts().then(() => renderStoreTransfer())">🔄 Yenilə</button>
+          <button onclick="fetchProductionStock().then(() => renderStoreTransfer())">🔄 Yenilə</button>
           <button class="primary" onclick="addStoreTransfer()">Mağazaya köçür</button>
         </div>
       </div>
@@ -1368,7 +1373,6 @@
       </div>
     </div>`;
   
-
   function updateTransferTotal() {
     const qtyInput = document.getElementById("trQty");
     const costInput = document.getElementById("trCost");
@@ -1383,7 +1387,6 @@
     totalInput.value = fmtMoney(total);
   }
   
-  
   document.getElementById("trProduct").addEventListener("change", function() {
     const selectedOption = this.options[this.selectedIndex];
     const salePrice = Number(selectedOption.getAttribute("data-saleprice") || 0);
@@ -1391,10 +1394,8 @@
     updateTransferTotal();
   });
   
- 
   document.getElementById("trQty").addEventListener("input", updateTransferTotal);
   document.getElementById("trCost").addEventListener("input", updateTransferTotal);
-  
   
   const firstOption = document.getElementById("trProduct").options[0];
   if (firstOption) {
