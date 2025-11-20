@@ -307,6 +307,46 @@
       const today = () => new Date().toISOString().slice(0, 10);
       const uid = () =>
         Math.random().toString(36).slice(2) + Date.now().toString(36);
+      async function downloadExcel(type, params = {}, filenamePrefix = type) {
+        try {
+          const qs = new URLSearchParams();
+          qs.set("type", type);
+          Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && `${v}`.trim() !== "") {
+              qs.set(k, v);
+            }
+          });
+          const res = await fetch(`/api/excel-table?${qs.toString()}`);
+          if (!res.ok) {
+            const msg = await res.text();
+            throw new Error(msg || "Server error");
+          }
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${filenamePrefix}.xlsx`;
+          a.click();
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          alert("Excel endirilmədi: " + err.message);
+        }
+      }
+      function exportStockExcel() {
+        downloadExcel("stock", {}, `stock_${today()}`);
+      }
+      function exportProfitLossExcel() {
+        const from = $("#rpFrom")?.value;
+        const to = $("#rpTo")?.value;
+        if (!from || !to) {
+          alert("Hesabat dövrünü seçin");
+          return;
+        }
+        downloadExcel("profit-loss", { from, to }, `profit_loss_${from}_${to}`);
+      }
+      function exportMovementExcel() {
+        downloadExcel("movements", {}, `movements_${today()}`);
+      }
 
       // ====== Tabs ======
       const TABS = [
@@ -631,6 +671,9 @@
         $("#view").innerHTML = `
         <div class="card">
           <div class="section-title">Остатки материалов (кг)</div>
+          <div class="row" style="justify-content:flex-end;margin-bottom:6px;">
+            <button onclick="exportStockExcel()">Excel</button>
+          </div>
           <table>
             <thead><tr><th>Код</th><th>Материал</th><th class="right">В наличии (кг)</th><th class="right">Средн. цена (₼/кг)</th><th class="right">Инв. стоимость</th><th>Статус</th></tr></thead>
             <tbody>${body}</tbody>
@@ -892,12 +935,18 @@
             <div class="row wrap">
               <div style="flex:1 1 160px;"><label>С даты</label><input id="rpFrom" type="date" value="${from}"></div>
               <div style="flex:1 1 160px;"><label>По дату</label><input id="rpTo" type="date" value="${to}"></div>
-              <div style="align-self:flex-end;"><button class="primary" onclick="renderPLBox()">Показать</button></div>
+              <div style="align-self:flex-end;display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="primary" onclick="renderPLBox()">Показать</button>
+                <button onclick="exportProfitLossExcel()">Excel</button>
+              </div>
             </div>
             <div id="plBox" style="margin-top:8px;"></div>
           </div>
           <div class="card">
             <div class="section-title">Движение материалов (кг/₼)</div>
+            <div class="row" style="justify-content:flex-end;margin-bottom:6px;">
+              <button onclick="exportMovementExcel()">Excel</button>
+            </div>
             <div id="mvBox"></div>
           </div>
         </div>`;
