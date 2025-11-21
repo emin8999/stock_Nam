@@ -87,32 +87,40 @@ public class StoreTransferService {
     // }
 
     @Transactional
-    public StoreTransfer create(StoreTransfer transfer) {
-        
-       
-        WarehouseStock warehouseStock = warehouseStockRepository.findByProductId(transfer.getProductId())
-            .orElseThrow(() -> new RuntimeException("Məhsul anbarda yoxdur"));
-        
-     
-        if (warehouseStock.getQuantity().compareTo(transfer.getQuantity()) < 0) {
-            throw new RuntimeException("Anbarda kifayət qədər məhsul yoxdur. Anbarda: " + warehouseStock.getQuantity());
-        }
-        
-       
-        warehouseStock.setQuantity(warehouseStock.getQuantity().subtract(transfer.getQuantity()));
-        warehouseStockRepository.save(warehouseStock);
-        warehouseStockRepository.flush(); 
-        
-       
-        StoreStock storeStock = storeStockRepository.findByProductId(transfer.getProductId())
-            .orElse(new StoreStock(null, transfer.getProductId(), BigDecimal.ZERO));
-        
-        storeStock.setQuantity(storeStock.getQuantity().add(transfer.getQuantity()));
-        storeStockRepository.save(storeStock);
-        
-      
-        return storeTransferRepository.save(transfer);
+public StoreTransfer create(StoreTransfer transfer) {
+
+    Product product = productRepository.findById(transfer.getProductId())
+            .orElseThrow(() -> new RuntimeException("Product tapılmadı"));
+
+    WarehouseStock warehouseStock = warehouseStockRepository.findByProductId(product.getId())
+            .orElseThrow(() -> new RuntimeException("Warehouse stock tapılmadı"));
+
+  
+    if (warehouseStock.getQuantity().compareTo(transfer.getQuantity()) < 0) {
+        throw new RuntimeException("Anbarda kifayət qədər məhsul yoxdur");
     }
+
+    
+    warehouseStock.setQuantity(
+            warehouseStock.getQuantity().subtract(transfer.getQuantity())
+    );
+    warehouseStockRepository.save(warehouseStock);
+
+   
+    product.setInitialQuantity(
+            product.getInitialQuantity().subtract(transfer.getQuantity())
+    );
+    productRepository.save(product);
+
+  
+    StoreStock storeStock = storeStockRepository.findByProductId(product.getId())
+            .orElse(new StoreStock(null, product.getId(), BigDecimal.ZERO));
+
+    storeStock.setQuantity(storeStock.getQuantity().add(transfer.getQuantity()));
+    storeStockRepository.save(storeStock);
+
+    return storeTransferRepository.save(transfer);
+}
     
     @Transactional
     public void delete(String id) {
