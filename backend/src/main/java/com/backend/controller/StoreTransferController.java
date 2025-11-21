@@ -21,10 +21,7 @@ public class StoreTransferController {
     
     private final StoreTransferService storeTransferService;
     
-    // @GetMapping
-    // public ResponseEntity<List<StoreTransfer>> getAll() {
-    //     return ResponseEntity.ok(storeTransferService.findAll());
-    // }
+ 
 
         @GetMapping
     public ResponseEntity<List<StoreTransferResponseDTO>> getAllDTO() {
