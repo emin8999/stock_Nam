@@ -256,6 +256,7 @@
       th {
         color: var(--muted);
         font-weight: 700;
+        white-space: nowrap;
       }
       .right {
         text-align: right;
@@ -962,7 +963,7 @@
             <div class="card">
               <div class="section-title">Qeydlər</div>
               <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
-                <button onclick="exportToExcel('storestock')">📥 Excel yüklə</button>
+                <button onclick="exportToExcel('finance')">📥 Excel yüklə</button>
               </div>
               <table>
                 <thead><tr><th>Tarix</th><th>Tip</th><th>Kateqoriya</th><th>Kontragent</th><th class="right">Məbləğ</th><th>Qeyd</th></tr></thead>
@@ -1039,7 +1040,7 @@
             <div class="card">
               <div class="section-title">Debitorlar (AR)</div>
               <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
-                <button onclick="exportToExcel('storestock')">📥 Excel yüklə</button>
+                <button onclick="exportToExcel('ar')">📥 Excel yüklə</button>
               </div>
               <div class="row wrap">
                 <div style="flex:2 1 220px;"><label>Kontragent</label><input id="arCp"></div>
@@ -1059,7 +1060,7 @@
             <div class="card">
               <div class="section-title">Kreditorlar (AP)</div>
               <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
-                <button onclick="exportToExcel('storestock')">📥 Excel yüklə</button>
+                <button onclick="exportToExcel('ap')">📥 Excel yüklə</button>
               </div>
               <div class="row wrap">
                 <div style="flex:2 1 220px;"><label>Kontragent</label><input id="apCp"></div>
@@ -1866,8 +1867,8 @@ function renderStoreSales() {
               f.note || ""
             ]);
           });
-        } else if (type === "arap") {
-          filename = "AR_AP_" + today() + ".csv";
+        } else if (type === "ar") {
+          filename = "AR_" + today() + ".csv";
           data.push(["Tip", "Tarix", "Kontragent", "Məbləğ", "Qalıq", "Status"]);
           APP.ar.forEach(e => {
             const paid = (e.payments || []).reduce((a,b) => a + Number(b.amountAzn || 0), 0);
@@ -1881,6 +1882,9 @@ function renderStoreSales() {
               e.status || ""
             ]);
           });
+        } else if (type === "ap") {
+          filename = "AP_" + today() + ".csv";
+          data.push(["Tip", "Tarix", "Kontragent", "Məbləğ", "Qalıq", "Status"]);
           APP.ap.forEach(e => {
             const paid = (e.payments || []).reduce((a,b) => a + Number(b.amountAzn || 0), 0);
             const remaining = (e.amountAzn || 0) - paid;
