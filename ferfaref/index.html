@@ -41,9 +41,15 @@
       }
       .tabs {
         display: flex;
-        gap: 8px;
+        gap: 25px;
         flex-wrap: wrap;
         margin: 12px 0 16px;
+      }
+      .tab-group {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        row-gap: 10px;
       }
       .tab {
         padding: 10px 14px;
@@ -95,7 +101,7 @@
         .sub {
           font-size: 11px;
         }
-        
+
         .card.kpi {
           padding: 8px;
         }
@@ -141,6 +147,9 @@
         input, select, textarea, button {
           font-size: 14px;
         }
+        .tabs {
+          gap: 15px;
+        }
       }
       @media (max-width: 480px) {
         .app {
@@ -154,6 +163,14 @@
         }
         .badge {
           font-size: 10px;
+        }
+        .tabs {
+          gap: 10px;
+        }
+      }
+      @media (max-width: 400px) {
+        .tab {
+          padding: 8px 6px;
         }
       }
       .card {
@@ -368,19 +385,27 @@
       const today = () => new Date().toISOString().slice(0, 10);
 
       // TABS - İSTEHSAL VƏ İSTEHSAL ANBARI SİLİNDİ
-      const TABS = [
-        { id: "materials", name: "Materiallar" },
-        { id: "receipt", name: "Qəbul" },
-        { id: "issue", name: "Silmə" },
-        { id: "stock", name: "Anbar" },
-        { id: "products", name: "Məhsullar" },
-        { id: "storetransfer", name: "Mağazaya Köçürmə" },
-        { id: "storestock", name: "Mağaza Anbarı" },
-        { id: "storesales", name: "Satışlar" },
-        { id: "finance", name: "Maliyyə (Gəlir/Xərc)" },
-        { id: "arap", name: "Debitor/Kreditor (AR/AP)" },
-        { id: "reports", name: "Hesabatlar" },
-      ];
+      const TABS = {
+        warehouse: [
+          { id: "materials", name: "Materiallar" },
+          { id: "receipt", name: "Qəbul" },
+          { id: "issue", name: "Silmə" },
+          { id: "stock", name: "Anbar" }
+        ],
+
+        products: [
+          { id: "products", name: "Məhsullar" },
+          { id: "storetransfer", name: "Mağazaya Köçürmə" },
+          { id: "storestock", name: "Mağaza Anbarı" },
+          { id: "storesales", name: "Satışlar" },
+        ],
+
+        finance: [
+          { id: "finance", name: "Maliyyə (Gəlir/Xərc)" },
+          { id: "arap", name: "Debitor/Kreditor (AR/AP)" },
+          { id: "reports", name: "Hesabatlar" }
+        ]
+      };
       let currentTab = "materials";
 
       // APP STATE
@@ -402,10 +427,22 @@
 
       // render tabs
       function renderTabs() {
-        $("#tabs").innerHTML = TABS.map(
-          (t) =>
-            `<button class="tab ${currentTab === t.id ? "active" : ""}" onclick="switchTab('${t.id}')">${t.name}</button>`
-        ).join("");
+        $("#tabs").innerHTML = Object.entries(TABS)
+          .map(([groupName, tabs]) => {
+            return `
+              <div class="tab-group">
+                  ${tabs
+                    .map(
+                      (t) =>
+                        `<button class="tab ${
+                          currentTab === t.id ? "active" : ""
+                        }" onclick="switchTab('${t.id}')">${t.name}</button>`
+                    )
+                    .join("")}
+              </div>
+            `;
+          })
+          .join("");
       }
       
       async function switchTab(id) {
