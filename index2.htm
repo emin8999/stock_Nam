@@ -72,20 +72,26 @@
       .cols-4 {
         grid-template-columns: repeat(4, 1fr);
       }
-      @media (max-width: 1024px) {
-        .cols-4 {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
       @media (max-width: 720px) {
-        .cols-4,
         .cols-3,
         .cols-2 {
           grid-template-columns: 1fr;
         }
 
+        .cols-4 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
         .card {
           overflow-x: auto;
+        }
+
+        .card.kpi {
+          padding: 8px;
+        }
+
+        .card.kpi .val {
+          font-weight: normal;
         }
       }
       .card {
@@ -136,6 +142,7 @@
       }
       textarea {
         min-height: 72px;
+        resize: none;
       }
       button {
         padding: 10px 14px;

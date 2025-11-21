@@ -75,9 +75,6 @@
         grid-template-columns: repeat(4, 1fr);
       }
       @media (max-width: 1024px) {
-        .cols-4 {
-          grid-template-columns: repeat(2, 1fr);
-        }
         .cols-3 {
           grid-template-columns: repeat(2, 1fr);
         }
@@ -98,7 +95,19 @@
         .sub {
           font-size: 11px;
         }
-        .cols-4,
+        
+        .card.kpi {
+          padding: 8px;
+        }
+
+        .card.kpi .val {
+          font-weight: normal;
+        }
+
+        .cols-4 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
         .cols-3 {
           grid-template-columns: 1fr;
         }
@@ -195,6 +204,7 @@
       }
       textarea {
         min-height: 72px;
+        resize: none;
       }
       button {
         padding: 10px 14px;
@@ -914,6 +924,9 @@
             </div>
             <div class="card">
               <div class="section-title">Qeydlər</div>
+              <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
+                <button onclick="exportToExcel('storestock')">📥 Excel yüklə</button>
+              </div>
               <table>
                 <thead><tr><th>Tarix</th><th>Tip</th><th>Kateqoriya</th><th>Kontragent</th><th class="right">Məbləğ</th><th>Qeyd</th></tr></thead>
                 <tbody>${list}</tbody>
@@ -988,6 +1001,9 @@
           <div class="grid cols-2">
             <div class="card">
               <div class="section-title">Debitorlar (AR)</div>
+              <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
+                <button onclick="exportToExcel('storestock')">📥 Excel yüklə</button>
+              </div>
               <div class="row wrap">
                 <div style="flex:2 1 220px;"><label>Kontragent</label><input id="arCp"></div>
                 <div style="flex:1 1 160px;"><label>Tarix</label><input id="arDate" type="date" value="${today()}"></div>
@@ -1005,6 +1021,9 @@
 
             <div class="card">
               <div class="section-title">Kreditorlar (AP)</div>
+              <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
+                <button onclick="exportToExcel('storestock')">📥 Excel yüklə</button>
+              </div>
               <div class="row wrap">
                 <div style="flex:2 1 220px;"><label>Kontragent</label><input id="apCp"></div>
                 <div style="flex:1 1 160px;"><label>Tarix</label><input id="apDate" type="date" value="${today()}"></div>
