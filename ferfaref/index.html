@@ -60,6 +60,7 @@
         color: #fff;
         border: none;
       }
+
       .grid {
         display: grid;
         gap: 12px;
@@ -80,6 +81,12 @@
         .cols-3 {
           grid-template-columns: repeat(2, 1fr);
         }
+        .cols-2 {
+          grid-template-columns: repeat(1, 1fr);
+        }
+        .cols-2 > .card {
+          overflow-x: auto;
+        }
       }
       @media (max-width: 720px) {
         .app {
@@ -92,8 +99,7 @@
           font-size: 11px;
         }
         .cols-4,
-        .cols-3,
-        .cols-2 {
+        .cols-3 {
           grid-template-columns: 1fr;
         }
         .tab {
