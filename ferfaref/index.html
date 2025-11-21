@@ -1171,10 +1171,16 @@
 
       // ====== PRODUCTS ======
      function renderProducts() {
+        let totalQuantity = 0;
+        let totalValue = 0;
+        
         const list = APP.products.map(x => {
           const unitPrice = x.unitPrice || x.salePrice || 0;
-          const quantity = x.initialQuantity || 0;
+          const quantity = x.initialQuantity || x.quantity || 0;
           const total = unitPrice * quantity;
+          
+          totalQuantity += quantity;
+          totalValue += total;
           
           return `
           <tr>
@@ -1183,20 +1189,21 @@
             <td class="tiny">${x.description || ""}</td>
             <td>${x.category || ""}</td>
             <td class="right">${fmtMoney(unitPrice)}</td>
-            <td class="right">
-              <input type="number" step="1" min="0" value="${quantity}" 
-                     id="qty_${x.id}" style="width:80px;padding:4px;" 
-                     onchange="updateProductQuantity('${x.id}', this.value)">
-            </td>
+            <td class="right">${fmtN(quantity, 0)}</td>
             <td class="right">${fmtMoney(total)}</td>
             <td>${x.isActive === false ? '<span class="badge warn">arxiv</span>' : '<span class="badge ok">aktiv</span>'}</td>
           </tr>`;
         }).join("") || '<tr><td colspan="8" class="tiny">Məhsul yoxdur</td></tr>';
 
+        const productOptions = APP.products
+          .filter(x => x.isActive !== false)
+          .map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
+          .join("");
+
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
-              <div class="section-title">Məhsul kataloqu</div>
+              <div class="section-title">Yeni məhsul əlavə et</div>
               <div class="row wrap">
                 <div style="flex:1 1 150px;"><label>Kod</label><input id="pCode" placeholder="PRD-001"></div>
                 <div style="flex:2 1 200px;"><label>Ad</label><input id="pName" placeholder="Ayaqqabı model A"></div>
@@ -1205,32 +1212,65 @@
                 <div style="flex:1 1 120px;"><label>İlkin miqdar</label><input id="pInitQty" type="number" step="1" value="0"></div>
               </div>
               <label>Təsvir</label><textarea id="pDesc" placeholder="Məhsul haqqında"></textarea>
-              <div class="row" style="justify-content:flex-end;margin-top:8px;">
+              <div class="row" style="justify-content:space-between;margin-top:8px;">
+                <button onclick="exportToExcel('products')">📥 Excel yüklə</button>
                 <button class="primary" onclick="addProduct()">Məhsul əlavə et</button>
+              </div>
+              
+              <div class="divider"></div>
+              
+              <div class="section-title">Mövcud məhsula miqdar əlavə et</div>
+              <div class="row wrap">
+                <div style="flex:2 1 260px;"><label>Məhsul</label><select id="pUpdateSelect">${productOptions}</select></div>
+                <div style="flex:1 1 120px;"><label>Əlavə ediləcək miqdar</label><input id="pUpdateQty" type="number" step="1" min="1" value="0"></div>
+              </div>
+              <div class="row" style="justify-content:flex-end;margin-top:8px;">
+                <button class="primary" onclick="updateProductQuantity()">Miqdar əlavə et</button>
               </div>
             </div>
             <div class="card">
               <div class="section-title">Məhsullar</div>
               <table>
-                <thead><tr><th>Kod</th><th>Ad</th><th>Təsvir</th><th>Kateqoriya</th><th class="right">Satış qiyməti</th><th class="right">Miqdar</th><th class="right">Total</th><th>Status</th></tr></thead>
+                <thead><tr>
+                  <th>Kod</th>
+                  <th>Ad</th>
+                  <th>Təsvir</th>
+                  <th>Kateqoriya</th>
+                  <th class="right">Satış qiyməti</th>
+                  <th class="right">Miqdar <span class="badge ok">${fmtN(totalQuantity, 0)}</span></th>
+                  <th class="right">Total <span class="badge ok">${fmtMoney(totalValue)}</span></th>
+                  <th>Status</th>
+                </tr></thead>
                 <tbody>${list}</tbody>
               </table>
             </div>
           </div>`;
       }
 
-      async function updateProductQuantity(productId, newQuantity) {
-        const qty = Number(newQuantity);
-        if (qty < 0) {
-          alert("Miqdar mənfi ola bilməz");
-          await fetchProducts();
+      async function updateProductQuantity() {
+        const productId = $("#pUpdateSelect").value;
+        const addQty = Number($("#pUpdateQty").value);
+        
+        if (!productId) {
+          alert("Məhsul seçin");
+          return;
+        }
+        
+        if (addQty <= 0) {
+          alert("Əlavə ediləcək miqdar 0-dan böyük olmalıdır");
           return;
         }
         
         try {
-          await apiPUT(`/api/products/${productId}/quantity`, { quantity: qty });
+          const product = APP.products.find(p => p.id === productId);
+          const currentQty = product.initialQuantity || product.quantity || 0;
+          const newQty = currentQty + addQty;
+          
+          await apiPUT(`/api/products/${productId}/quantity`, { quantity: newQty });
           await fetchProducts();
           await fetchProductionStock();
+          $("#pUpdateQty").value = "0";
+          alert(`✅ ${addQty} ədəd əlavə edildi. Yeni miqdar: ${newQty}`);
         } catch (e) {
           await fetchProducts();
         }
@@ -1442,35 +1482,41 @@
       }
 
       // ====== STORE STOCK ======
-   function renderStoreStock() {
+  function renderStoreStock() {
+  let totalQuantity = 0;
+  let totalValue = 0;
+  
   const rows = (APP.storeStock || []).map(s => {
-    
     const product = APP.products.find(p => p.id === s.productId) || {};
     const costPerUnit = product.unitPrice || product.salePrice || s.avgCost || 0;
     const quantity = s.quantity || 0;
+    const itemValue = costPerUnit * quantity;
     
-    
-    const totalValue = costPerUnit * quantity;
+    totalQuantity += quantity;
+    totalValue += itemValue;
     
     return `<tr>
       <td>${s.productCode || ""}</td>
       <td>${s.productName || ""}</td>
       <td class="right">${fmtN(quantity, 0)}</td>
       <td class="right">${fmtMoney(costPerUnit)}</td>
-      <td class="right">${fmtMoney(totalValue)}</td>
+      <td class="right">${fmtMoney(itemValue)}</td>
     </tr>`;
   }).join("") || '<tr><td colspan="5" class="tiny">Mağaza anbarında məhsul yoxdur</td></tr>';
 
   $("#view").innerHTML = `
     <div class="card">
       <div class="section-title">Mağaza anbarı</div>
+      <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
+        <button onclick="exportToExcel('storestock')">📥 Excel yüklə</button>
+      </div>
       <table>
         <thead><tr>
           <th>Kod</th>
           <th>Məhsul</th>
-          <th class="right">Miqdar (ədəd)</th>
+          <th class="right">Miqdar (ədəd) <span class="badge ok">${fmtN(totalQuantity, 0)}</span></th>
           <th class="right">1 ədəd maya (₼)</th>
-          <th class="right">Dəyər (₼)</th>
+          <th class="right">Dəyər (₼) <span class="badge ok">${fmtMoney(totalValue)}</span></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -1607,6 +1653,199 @@ function renderStoreSales() {
         else if (currentTab === "finance") renderFinance();
         else if (currentTab === "arap") renderARAP();
         else if (currentTab === "reports") renderReports();
+      }
+
+
+      function exportToExcel(type) {
+        let data = [];
+        let filename = "";
+        
+        if (type === "products") {
+          filename = "Mehsullar_" + today() + ".csv";
+          data.push(["Kod", "Ad", "Təsvir", "Kateqoriya", "Satış qiyməti", "Miqdar", "Total", "Status"]);
+          APP.products.forEach(x => {
+            const unitPrice = x.unitPrice || x.salePrice || 0;
+            const quantity = x.initialQuantity || x.quantity || 0;
+            const total = unitPrice * quantity;
+            data.push([
+              x.code || "",
+              x.name || "",
+              x.description || "",
+              x.category || "",
+              unitPrice.toFixed(2),
+              quantity,
+              total.toFixed(2),
+              x.isActive === false ? "arxiv" : "aktiv"
+            ]);
+          });
+        } else if (type === "storestock") {
+          filename = "Magaza_Anbari_" + today() + ".csv";
+          data.push(["Kod", "Məhsul", "Miqdar", "Maya/ədəd", "Dəyər"]);
+          (APP.storeStock || []).forEach(s => {
+            const product = APP.products.find(p => p.id === s.productId) || {};
+            const costPerUnit = product.unitPrice || product.salePrice || s.avgCost || 0;
+            const quantity = s.quantity || 0;
+            const value = costPerUnit * quantity;
+            data.push([
+              s.productCode || "",
+              s.productName || "",
+              quantity,
+              costPerUnit.toFixed(2),
+              value.toFixed(2)
+            ]);
+          });
+        } else if (type === "materials") {
+          filename = "Materiallar_" + today() + ".csv";
+          data.push(["Kod", "Ad", "Vahid", "Minimum qalıq", "Status"]);
+          APP.materials.forEach(x => {
+            data.push([
+              x.code || "",
+              x.name || "",
+              "kg",
+              (x.minLevel || 0).toFixed(3),
+              x.isActive === false ? "arxiv" : "aktiv"
+            ]);
+          });
+        } else if (type === "receipts") {
+          filename = "Qebullar_" + today() + ".csv";
+          data.push(["Tarix", "Kod", "Material", "Miqdar (kg)", "Qiymət/kg", "Məbləğ", "Təchizatçı", "Şərh"]);
+          APP.receipts.forEach(r => {
+            const mat = APP.materials.find(m => m.id === r.materialId) || {};
+            data.push([
+              r.date,
+              mat.code || "",
+              mat.name || "",
+              (r.qtyKg || 0).toFixed(3),
+              (r.pricePerKg || 0).toFixed(2),
+              (r.totalCost || 0).toFixed(2),
+              r.supplier || "",
+              r.note || ""
+            ]);
+          });
+        } else if (type === "issues") {
+          filename = "Silmeler_" + today() + ".csv";
+          data.push(["Tarix", "Kod", "Material", "Miqdar (kg)", "Orta qiymət", "Məbləğ", "İş", "Şərh"]);
+          APP.issues.forEach(i => {
+            const mat = APP.materials.find(m => m.id === i.materialId) || {};
+            data.push([
+              i.date,
+              mat.code || "",
+              mat.name || "",
+              (i.qtyKg || 0).toFixed(3),
+              (i.avgCostUsed || 0).toFixed(2),
+              (i.totalCostUsed || 0).toFixed(2),
+              i.jobRef || "",
+              i.note || ""
+            ]);
+          });
+        } else if (type === "stock") {
+          filename = "Anbar_" + today() + ".csv";
+          data.push(["Kod", "Material", "Miqdar (kg)", "Orta qiymət", "Dəyər", "Status"]);
+          (APP.stock || []).forEach(s => {
+            data.push([
+              s.code || "",
+              s.name || "",
+              (s.onHandKg || 0).toFixed(3),
+              (s.avgCostPerKg || 0).toFixed(2),
+              (s.inventoryValue || 0).toFixed(2),
+              s.status === "low" ? "LOW" : "OK"
+            ]);
+          });
+        } else if (type === "storetransfer") {
+          filename = "Magaza_Kocurme_" + today() + ".csv";
+          data.push(["Tarix", "Kod", "Məhsul", "Miqdar", "Maya/ədəd", "Cəm", "Qeyd"]);
+          APP.storeTransfers.forEach(t => {
+            const product = APP.products.find(p => p.id === t.productId) || {};
+            const costPerUnit = product.unitPrice || product.salePrice || t.costPerUnit || 0;
+            data.push([
+              t.date,
+              t.productCode || "",
+              t.productName || "",
+              t.quantity || 0,
+              costPerUnit.toFixed(2),
+              (costPerUnit * (t.quantity || 0)).toFixed(2),
+              t.note || ""
+            ]);
+          });
+        } else if (type === "storesales") {
+          filename = "Satislar_" + today() + ".csv";
+          data.push(["Tarix", "Kod", "Məhsul", "Miqdar", "Qiymət", "Gəlir", "Xərc", "Mənfəət", "Müştəri", "Qeyd"]);
+          APP.storeSales.forEach(sale => {
+            const prod = APP.products.find(p => p.id === sale.productId) || {};
+            const salePrice = sale.unitPrice || 0;
+            const quantity = sale.quantity || 0;
+            const revenue = salePrice * quantity;
+            const costPerUnit = prod.unitPrice || prod.salePrice || 0;
+            const expense = costPerUnit * quantity;
+            const profit = revenue - expense;
+            data.push([
+              sale.date,
+              prod.code || "",
+              prod.name || "",
+              quantity,
+              salePrice.toFixed(2),
+              revenue.toFixed(2),
+              expense.toFixed(2),
+              profit.toFixed(2),
+              sale.customer || "",
+              sale.note || ""
+            ]);
+          });
+        } else if (type === "finance") {
+          filename = "Maliyye_" + today() + ".csv";
+          data.push(["Tarix", "Tip", "Kateqoriya", "Kontragent", "Məbləğ", "Qeyd"]);
+          (APP.finances || []).forEach(f => {
+            data.push([
+              f.date,
+              f.type === "income" ? "Gəlir" : "Xərc",
+              f.category || "",
+              f.counterparty || "",
+              (f.amountAzn || 0).toFixed(2),
+              f.note || ""
+            ]);
+          });
+        } else if (type === "arap") {
+          filename = "AR_AP_" + today() + ".csv";
+          data.push(["Tip", "Tarix", "Kontragent", "Məbləğ", "Qalıq", "Status"]);
+          APP.ar.forEach(e => {
+            const paid = (e.payments || []).reduce((a,b) => a + Number(b.amountAzn || 0), 0);
+            const remaining = (e.amountAzn || 0) - paid;
+            data.push([
+              "AR (Debitor)",
+              e.date,
+              e.counterparty || "",
+              (e.amountAzn || 0).toFixed(2),
+              remaining.toFixed(2),
+              e.status || ""
+            ]);
+          });
+          APP.ap.forEach(e => {
+            const paid = (e.payments || []).reduce((a,b) => a + Number(b.amountAzn || 0), 0);
+            const remaining = (e.amountAzn || 0) - paid;
+            data.push([
+              "AP (Kreditor)",
+              e.date,
+              e.counterparty || "",
+              (e.amountAzn || 0).toFixed(2),
+              remaining.toFixed(2),
+              e.status || ""
+            ]);
+          });
+        }
+        
+        // CSV yaradırıq - SEMİCOLON (;) ilə
+        const csv = data.map(row => row.map(cell => {
+          const str = String(cell).replace(/"/g, '""');
+          return `"${str}"`;
+        }).join(";")).join("\n");
+        
+        // UTF-8 BOM əlavə edirik (Excel üçün)
+        const BOM = "\uFEFF";
+        const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
       }
 
       async function refreshAll() {
