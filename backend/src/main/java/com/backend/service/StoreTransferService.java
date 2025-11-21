@@ -35,59 +35,10 @@ public class StoreTransferService {
     public List<StoreTransfer> findByDateRange(LocalDate from, LocalDate to) {
         return storeTransferRepository.findByDateBetween(from, to);
     }
-    
-    // @Transactional
-    // public StoreTransfer create(StoreTransfer transfer) {
-       
-    //     WarehouseStock warehouseStock = warehouseStockRepository.findByProductId(transfer.getProductId())
-    //         .orElseThrow(() -> new RuntimeException("Məhsul anbarda yoxdur"));
-        
-    //     if (warehouseStock.getQuantity().compareTo(transfer.getQuantity()) < 0) {
-    //         throw new RuntimeException("Anbarda kifayət qədər məhsul yoxdur. Anbarda: " + warehouseStock.getQuantity());
-    //     }
-        
-    //     warehouseStock.setQuantity(warehouseStock.getQuantity().subtract(transfer.getQuantity()));
-    //     warehouseStockRepository.save(warehouseStock);
-        
-        
-    //     StoreStock storeStock = storeStockRepository.findByProductId(transfer.getProductId())
-    //         .orElse(new StoreStock(null, transfer.getProductId(), BigDecimal.ZERO));
-        
-    //     storeStock.setQuantity(storeStock.getQuantity().add(transfer.getQuantity()));
-    //     storeStockRepository.save(storeStock);
-        
-    //     return storeTransferRepository.save(transfer);
-    // }
-    // @Transactional
-    // public StoreTransfer createTransfer(StoreTransfer transfer) {
-    //     WarehouseStock warehouseStock = warehouseStockRepository.findByProductId(transfer.getProductId())
-    //         .orElseThrow(() -> new RuntimeException("İstehsal anbarında bu məhsul yoxdur"));
-        
-    //     if (warehouseStock.getQuantity().compareTo(transfer.getQuantity()) < 0) {
-    //         throw new RuntimeException(
-    //             String.format("İstehsal anbarında kifayət qədər məhsul yoxdur. " +
-    //                 "Anbar: %s, Tələb: %s", 
-    //                 warehouseStock.getQuantity(), 
-    //                 transfer.getQuantity())
-    //         );
-    //     }
-    //     warehouseStock.setQuantity(warehouseStock.getQuantity().subtract(transfer.getQuantity()));
-    //     warehouseStockRepository.save(warehouseStock);
-        
-        
-    //     StoreTransfer savedTransfer = storeTransferRepository.save(transfer);
-        
-    //     StoreStock storeStock = storeStockRepository.findByProductId(transfer.getProductId())
-    //         .orElse(new StoreStock(null, transfer.getProductId(), BigDecimal.ZERO));
-        
-    //     storeStock.setQuantity(storeStock.getQuantity().add(transfer.getQuantity()));
-    //     storeStockRepository.save(storeStock);
-        
-    //     return savedTransfer;
-    // }
+
 
     @Transactional
-public StoreTransfer create(StoreTransfer transfer) {
+    public StoreTransfer create(StoreTransfer transfer) {
 
     Product product = productRepository.findById(transfer.getProductId())
             .orElseThrow(() -> new RuntimeException("Product tapılmadı"));
@@ -133,16 +84,38 @@ public StoreTransfer create(StoreTransfer transfer) {
             .collect(Collectors.toList());
     }
 
-    public StoreTransferResponseDTO mapToDTO(StoreTransfer transfer) {
+//     public StoreTransferResponseDTO mapToDTO(StoreTransfer transfer) {
+//     Product product = productRepository.findById(transfer.getProductId())
+//         .orElseThrow(() -> new RuntimeException("Product not found"));
+
+//     return new StoreTransferResponseDTO(
+//         transfer.getId(),
+//         transfer.getProductId(),
+//         product.getCode(),
+//         product.getName(),
+//         product.getCategory(),
+//         transfer.getQuantity(),
+//         transfer.getDate(),
+//         transfer.getNote()
+//     );
+// }
+
+public StoreTransferResponseDTO mapToDTO(StoreTransfer transfer) {
+    // orElse(null) istifadə et - xəta atmır
     Product product = productRepository.findById(transfer.getProductId())
-        .orElseThrow(() -> new RuntimeException("Product not found"));
+        .orElse(null); // ✅ DƏYİŞDİRDİK
+
+    // null check əlavə et
+    String code = product != null ? product.getCode() : "DELETED";
+    String name = product != null ? product.getName() : "⚠️ Məhsul silinib";
+    String category = product != null ? product.getCategory() : "-";
 
     return new StoreTransferResponseDTO(
         transfer.getId(),
         transfer.getProductId(),
-        product.getCode(),
-        product.getName(),
-        product.getCategory(),
+        code,
+        name,
+        category,
         transfer.getQuantity(),
         transfer.getDate(),
         transfer.getNote()
