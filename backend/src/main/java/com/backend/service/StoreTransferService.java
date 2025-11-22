@@ -101,11 +101,11 @@ public class StoreTransferService {
 // }
 
 public StoreTransferResponseDTO mapToDTO(StoreTransfer transfer) {
-    // orElse(null) istifadə et - xəta atmır
+    
     Product product = productRepository.findById(transfer.getProductId())
         .orElse(null); // ✅ DƏYİŞDİRDİK
 
-    // null check əlavə et
+    
     String code = product != null ? product.getCode() : "DELETED";
     String name = product != null ? product.getName() : "⚠️ Məhsul silinib";
     String category = product != null ? product.getCategory() : "-";

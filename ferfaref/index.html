@@ -1379,10 +1379,10 @@
   console.log("renderStoreTransfer çağırıldı");
   console.log("APP.productionStock:", APP.productionStock);
   
-  // Əgər productionStock boşdursa, products-dan istifadə et
+ 
   let availableStock = APP.productionStock || [];
   
-  // Əgər productionStock yoxdursa, products-dan yaradaq
+  
   if (availableStock.length === 0 && APP.products.length > 0) {
     availableStock = APP.products
       .filter(p => p.isActive !== false)
@@ -1435,6 +1435,40 @@
     })
     .join("");
 
+  
+  function filterTransfersByDate() {
+    const fromDate = $("#trFilterFrom").value;
+    const toDate = $("#trFilterTo").value;
+    
+    let filtered = APP.storeTransfers.slice();
+    
+    if (fromDate) {
+      filtered = filtered.filter(t => t.date >= fromDate);
+    }
+    if (toDate) {
+      filtered = filtered.filter(t => t.date <= toDate);
+    }
+    
+    const items = filtered.sort((a,b)=> (a.date||"").localeCompare(b.date||""))
+      .map(t => {
+        const product = APP.products.find(p => p.id === t.productId) || {};
+        const costPerUnit = product.unitPrice || product.salePrice || t.costPerUnit || 0;
+        const totalCost = costPerUnit * (t.quantity || 0);
+        
+        return `<tr>
+          <td>${t.date}</td>
+          <td>${t.productCode || ""}</td>
+          <td>${t.productName || ""}</td>
+          <td class="right">${fmtN(t.quantity, 0)}</td>
+          <td class="right">${fmtMoney(costPerUnit)}</td>
+          <td class="right">${fmtMoney(totalCost)}</td>
+          <td class="tiny">${t.note || ""}</td>
+        </tr>`;
+      }).join("") || '<tr><td colspan="7" class="tiny">Bu tarix aralığında transfer yoxdur</td></tr>';
+    
+    $("#transferTableBody").innerHTML = items;
+  }
+
   const items = APP.storeTransfers.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
     .map(t => {
       const product = APP.products.find(p => p.id === t.productId) || {};
@@ -1473,9 +1507,15 @@
       </div>
       <div class="card">
         <div class="section-title">Köçürmə tarixçəsi</div>
+        <div class="row wrap" style="margin-bottom:12px;">
+          <div style="flex:1 1 160px;"><label>Başlanğıc tarixi</label><input id="trFilterFrom" type="date"></div>
+          <div style="flex:1 1 160px;"><label>Son tarix</label><input id="trFilterTo" type="date"></div>
+          <div style="align-self:flex-end;"><button onclick="filterTransfersByDate()">🔍 Filtrlə</button></div>
+          <div style="align-self:flex-end;"><button class="ghost" onclick="clearTransferFilter()">✕ Təmizlə</button></div>
+        </div>
         <table>
           <thead><tr><th>Tarix</th><th>Kod</th><th>Məhsul</th><th class="right">Miqdar</th><th class="right">Maya/ədəd</th><th class="right">Cəm</th><th>Qeyd</th></tr></thead>
-          <tbody>${items}</tbody>
+          <tbody id="transferTableBody">${items}</tbody>
         </table>
       </div>
     </div>`;
@@ -1493,6 +1533,14 @@
     
     totalInput.value = fmtMoney(total);
   }
+  
+  
+  window.filterTransfersByDate = filterTransfersByDate;
+  window.clearTransferFilter = function() {
+    $("#trFilterFrom").value = "";
+    $("#trFilterTo").value = "";
+    filterTransfersByDate();
+  };
   
   document.getElementById("trProduct").addEventListener("change", function() {
     const selectedOption = this.options[this.selectedIndex];
