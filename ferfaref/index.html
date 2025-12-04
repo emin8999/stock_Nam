@@ -939,43 +939,199 @@
       }
 
       // --- FINANCE ---
-      function renderFinance() {
-        const list = (APP.finances || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(f => `<tr>
-            <td>${f.date}</td>
-            <td>${f.type === "income" ? "Gəlir" : "Xərc"}</td>
-            <td>${f.category||""}</td>
-            <td>${f.counterparty||""}</td>
-            <td class="right">${fmtMoney(f.amountAzn||0)}</td>
-            <td class="tiny">${f.note||""}</td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Qeyd yoxdur</td></tr>';
-          
-        $("#view").innerHTML = `
-          <div class="grid cols-2">
-            <div class="card">
-              <div class="section-title">Gəlir / Xərc</div>
-              <div class="row wrap">
-                <div style="flex:1 1 140px;"><label>Tip</label><select id="fnType"><option value="income">Gəlir</option><option value="expense">Xərc</option></select></div>
-                <div style="flex:2 1 220px;"><label>Kateqoriya</label><input id="fnCat" placeholder="Kira, logistika, satış..."></div>
-                <div style="flex:1 1 150px;"><label>Məbləğ (₼)</label><input id="fnAmt" type="number" step="0.01"></div>
-                <div style="flex:1 1 160px;"><label>Tarix</label><input id="fnDate" type="date" value="${today()}"></div>
-                <div style="flex:2 1 220px;"><label>Kontragent</label><input id="fnCp" placeholder="MMC və ya şəxsin adı"></div>
+function renderFinance() {
+  // Filtr funksiyası
+  function filterFinances() {
+    const fromDate = $("#fnFilterFrom")?.value;
+    const toDate = $("#fnFilterTo")?.value;
+    
+    // Checkbox-lardan seçilmiş dəyərləri toplayırıq
+    const selectedTypes = Array.from(document.querySelectorAll('input[name="fnFilterType"]:checked')).map(cb => cb.value);
+    const selectedCategories = Array.from(document.querySelectorAll('input[name="fnFilterCategory"]:checked')).map(cb => cb.value);
+    const selectedCounterparties = Array.from(document.querySelectorAll('input[name="fnFilterCounterparty"]:checked')).map(cb => cb.value);
+    
+    const minAmount = Number($("#fnFilterMinAmount")?.value || 0);
+    const maxAmount = Number($("#fnFilterMaxAmount")?.value || Infinity);
+    
+    let filtered = APP.finances.slice();
+    
+    // Tarix filtri
+    if (fromDate) filtered = filtered.filter(f => f.date >= fromDate);
+    if (toDate) filtered = filtered.filter(f => f.date <= toDate);
+    
+    // Tip filtri
+    if (selectedTypes.length > 0) {
+      filtered = filtered.filter(f => selectedTypes.includes(f.type));
+    }
+    
+    // Kateqoriya filtri
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter(f => selectedCategories.includes(f.category));
+    }
+    
+    // Kontragent filtri
+    if (selectedCounterparties.length > 0) {
+      filtered = filtered.filter(f => selectedCounterparties.includes(f.counterparty));
+    }
+    
+    // Məbləğ filtri
+    filtered = filtered.filter(f => {
+      const amt = f.amountAzn || 0;
+      return amt >= minAmount && amt <= maxAmount;
+    });
+    
+    // Statistika
+    const totalIncome = filtered.filter(f => f.type === "income").reduce((a,b) => a + (b.amountAzn||0), 0);
+    const totalExpense = filtered.filter(f => f.type === "expense").reduce((a,b) => a + (b.amountAzn||0), 0);
+    const netProfit = totalIncome - totalExpense;
+    
+    $("#fnStatsIncome").textContent = fmtMoney(totalIncome);
+    $("#fnStatsExpense").textContent = fmtMoney(totalExpense);
+    $("#fnStatsNet").textContent = fmtMoney(netProfit);
+    $("#fnStatsNetBadge").className = netProfit >= 0 ? "badge ok" : "badge bad";
+    $("#fnStatsCount").textContent = filtered.length;
+    
+    const list = filtered.sort((a,b)=> (b.date||"").localeCompare(a.date||""))
+      .map(f => `<tr>
+        <td>${f.date}</td>
+        <td>${f.type === "income" ? "Gəlir" : "Xərc"}</td>
+        <td>${f.category||""}</td>
+        <td>${f.counterparty||""}</td>
+        <td class="right">${fmtMoney(f.amountAzn||0)}</td>
+        <td class="tiny">${f.note||""}</td>
+      </tr>`).join("") || '<tr><td colspan="6" class="tiny">Bu filtrə uyğun qeyd yoxdur</td></tr>';
+    
+    $("#financeTableBody").innerHTML = list;
+  }
+  
+  // Unikal dəyərləri çıxaraq
+  const uniqueCategories = [...new Set(APP.finances.map(f => f.category).filter(Boolean))].sort();
+  const uniqueCounterparties = [...new Set(APP.finances.map(f => f.counterparty).filter(Boolean))].sort();
+  
+  // Checkbox-lar ilə seçimlər
+  const categoryCheckboxes = uniqueCategories.map(c => 
+    `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;">
+      <input type="checkbox" name="fnFilterCategory" value="${c}" style="width:auto;">
+      <span style="font-size:13px;">${c}</span>
+    </label>`
+  ).join("");
+  
+  const counterpartyCheckboxes = uniqueCounterparties.map(c => 
+    `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;">
+      <input type="checkbox" name="fnFilterCounterparty" value="${c}" style="width:auto;">
+      <span style="font-size:13px;">${c}</span>
+    </label>`
+  ).join("");
+  
+  // İlkin list
+  const list = (APP.finances || []).slice().sort((a,b)=> (b.date||"").localeCompare(a.date||""))
+    .map(f => `<tr>
+      <td>${f.date}</td>
+      <td>${f.type === "income" ? "Gəlir" : "Xərc"}</td>
+      <td>${f.category||""}</td>
+      <td>${f.counterparty||""}</td>
+      <td class="right">${fmtMoney(f.amountAzn||0)}</td>
+      <td class="tiny">${f.note||""}</td>
+    </tr>`).join("") || '<tr><td colspan="6" class="tiny">Qeyd yoxdur</td></tr>';
+  
+  // Statistika
+  const totalIncome = APP.finances.filter(f => f.type === "income").reduce((a,b) => a + (b.amountAzn||0), 0);
+  const totalExpense = APP.finances.filter(f => f.type === "expense").reduce((a,b) => a + (b.amountAzn||0), 0);
+  const netProfit = totalIncome - totalExpense;
+    
+  $("#view").innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="section-title">Gəlir / Xərc</div>
+        <div class="row wrap">
+          <div style="flex:1 1 140px;"><label>Tip</label><select id="fnType"><option value="income">Gəlir</option><option value="expense">Xərc</option></select></div>
+          <div style="flex:2 1 220px;"><label>Kateqoriya</label><input id="fnCat" placeholder="Kira, logistika, satış..."></div>
+          <div style="flex:1 1 150px;"><label>Məbləğ (₼)</label><input id="fnAmt" type="number" step="0.01"></div>
+          <div style="flex:1 1 160px;"><label>Tarix</label><input id="fnDate" type="date" value="${today()}"></div>
+          <div style="flex:2 1 220px;"><label>Kontragent</label><input id="fnCp" placeholder="MMC və ya şəxsin adı"></div>
+        </div>
+        <label>Qeyd</label><textarea id="fnNote"></textarea>
+        <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addFinance()">Əlavə et</button></div>
+      </div>
+      <div class="card">
+        <div class="section-title">Qeydlər</div>
+        
+        <!-- FİLTR SİSTEMİ -->
+        <div style="background:#0b1220;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;">
+          <div style="font-weight:700;margin-bottom:8px;font-size:14px;">🔍 Filtr</div>
+          <div class="row wrap" style="margin-bottom:8px;">
+            <div style="flex:1 1 140px;"><label>Başlanğıc</label><input id="fnFilterFrom" type="date"></div>
+            <div style="flex:1 1 140px;"><label>Son</label><input id="fnFilterTo" type="date"></div>
+            <div style="flex:1 1 120px;"><label>Min məbləğ (₼)</label><input id="fnFilterMinAmount" type="number" step="0.01"></div>
+            <div style="flex:1 1 120px;"><label>Max məbləğ (₼)</label><input id="fnFilterMaxAmount" type="number" step="0.01"></div>
+          </div>
+          <div class="row wrap">
+            <div style="flex:1 1 150px;">
+              <label>Tip</label>
+              <div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:8px;max-height:100px;overflow-y:auto;">
+                <label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;">
+                  <input type="checkbox" name="fnFilterType" value="income" style="width:auto;">
+                  <span style="font-size:13px;">Gəlir</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;">
+                  <input type="checkbox" name="fnFilterType" value="expense" style="width:auto;">
+                  <span style="font-size:13px;">Xərc</span>
+                </label>
               </div>
-              <label>Qeyd</label><textarea id="fnNote"></textarea>
-              <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addFinance()">Əlavə et</button></div>
             </div>
-            <div class="card">
-              <div class="section-title">Qeydlər</div>
-              <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
-                <button onclick="exportToExcel('finance')">📥 Excel yüklə</button>
+            <div style="flex:2 1 200px;">
+              <label>Kateqoriya</label>
+              <div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:8px;max-height:150px;overflow-y:auto;">
+                ${categoryCheckboxes || '<div class="tiny" style="color:var(--muted);">Kateqoriya yoxdur</div>'}
               </div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Tip</th><th>Kateqoriya</th><th>Kontragent</th><th class="right">Məbləğ</th><th>Qeyd</th></tr></thead>
-                <tbody>${list}</tbody>
-              </table>
             </div>
-          </div>`;
-      }
+            <div style="flex:2 1 200px;">
+              <label>Kontragent</label>
+              <div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:8px;max-height:150px;overflow-y:auto;">
+                ${counterpartyCheckboxes || '<div class="tiny" style="color:var(--muted);">Kontragent yoxdur</div>'}
+              </div>
+            </div>
+          </div>
+          <div class="row" style="justify-content:flex-end;margin-top:8px;gap:8px;">
+            <button onclick="filterFinances()">🔍 Filtrlə</button>
+            <button class="ghost" onclick="clearFinanceFilter()">✕ Təmizlə</button>
+          </div>
+        </div>
+        
+        <!-- STATİSTİKA -->
+        <div class="row wrap" style="margin-bottom:8px;gap:8px;">
+          <div class="pill"><span class="muted">Gəlir:</span> <b id="fnStatsIncome">${fmtMoney(totalIncome)}</b></div>
+          <div class="pill"><span class="muted">Xərc:</span> <b id="fnStatsExpense">${fmtMoney(totalExpense)}</b></div>
+          <div class="pill"><span class="muted">Xalis:</span> <b id="fnStatsNet">${fmtMoney(netProfit)}</b> <span id="fnStatsNetBadge" class="${netProfit >= 0 ? 'badge ok' : 'badge bad'}">${netProfit >= 0 ? 'OK' : 'NEG'}</span></div>
+          <div class="pill"><span class="muted">Say:</span> <b id="fnStatsCount">${APP.finances.length}</b></div>
+        </div>
+        
+        <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
+          <button onclick="exportToExcel('finance')">📥 Excel yüklə</button>
+        </div>
+        <table>
+          <thead><tr><th>Tarix</th><th>Tip</th><th>Kateqoriya</th><th>Kontragent</th><th class="right">Məbləğ</th><th>Qeyd</th></tr></thead>
+          <tbody id="financeTableBody">${list}</tbody>
+        </table>
+      </div>
+    </div>`;
+  
+  // Global funksiyalar
+  window.filterFinances = filterFinances;
+  window.clearFinanceFilter = function() {
+    $("#fnFilterFrom").value = "";
+    $("#fnFilterTo").value = "";
+    $("#fnFilterMinAmount").value = "";
+    $("#fnFilterMaxAmount").value = "";
+    
+    // Bütün checkbox-ları təmizlə
+    document.querySelectorAll('input[name="fnFilterType"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[name="fnFilterCategory"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[name="fnFilterCounterparty"]').forEach(cb => cb.checked = false);
+    
+    filterFinances();
+  };
+}
 
       async function addFinance() {
         const type = $("#fnType").value;
