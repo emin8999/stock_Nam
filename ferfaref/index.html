@@ -176,6 +176,10 @@
         .tab {
           padding: 8px 6px;
         }
+
+        .row > div {
+          min-width: auto;
+        }
       }
       .card {
         background: var(--card);
@@ -325,7 +329,74 @@
         animation: spin 1s linear infinite;
         display: inline-block;
       }
+      .grid.cols-2 .card {
+        height: fit-content;
+      }
       @keyframes spin { to { transform: rotate(360deg); } }
+
+      input.filter-input {
+        width: 100% !important;
+      }
+
+      .filter-inputs-container > div ,
+      .filter-inputs-container > div > * {
+        flex-shrink: 1;
+        min-width: 0;
+        width: 50%;
+      }
+
+      .checkbox-container {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .checkbox-container > * {
+        width: 100%;
+        flex: 1;
+        min-width: 0;
+        flex-shrink: 1;
+      }
+
+      .type-check-container {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        column-gap: 30px;
+      }
+
+      @media screen  and (max-width: 420px) {
+        .muted {
+          font-size: 14px;
+        }
+
+        .val {
+          font-size: 18px;
+        }
+      }
+
+      @media screen  and (max-width: 353px) {
+        .filter-inputs-container {
+          flex-wrap: wrap;
+        }
+      }
+
+      .scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable::-webkit-scrollbar-track {
+  background: #0f172a;     
+  border-radius: 8px;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+  background: #334155;     
+  border-radius: 8px;
+}
+
+.scrollable::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
     </style>
   </head>
   <body>
@@ -407,7 +478,7 @@
 
         finance: [
           { id: "finance", name: "Maliyyə (Gəlir/Xərc)" },
-          { id: "arap", name: "Debitor/Kreditor (AR/AP)" },
+          { id: "arap", name: "Borclu/Borc (AR/AP)" },
           { id: "reports", name: "Hesabatlar" }
         ]
       };
@@ -1010,7 +1081,7 @@ function renderFinance() {
   
   // Checkbox-lar ilə seçimlər
   const categoryCheckboxes = uniqueCategories.map(c => 
-    `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;">
+    `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;min-width:0;flex-shrink:1">
       <input type="checkbox" name="fnFilterCategory" value="${c}" style="width:auto;">
       <span style="font-size:13px;">${c}</span>
     </label>`
@@ -1059,37 +1130,43 @@ function renderFinance() {
         <!-- FİLTR SİSTEMİ -->
         <div style="background:#0b1220;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;">
           <div style="font-weight:700;margin-bottom:8px;font-size:14px;">🔍 Filtr</div>
-          <div class="row wrap" style="margin-bottom:8px;">
-            <div style="flex:1 1 140px;"><label>Başlanğıc</label><input id="fnFilterFrom" type="date"></div>
-            <div style="flex:1 1 140px;"><label>Son</label><input id="fnFilterTo" type="date"></div>
-            <div style="flex:1 1 120px;"><label>Min məbləğ (₼)</label><input id="fnFilterMinAmount" type="number" step="0.01"></div>
-            <div style="flex:1 1 120px;"><label>Max məbləğ (₼)</label><input id="fnFilterMaxAmount" type="number" step="0.01"></div>
+          <div class="row filter-inputs-container" style="margin-bottom:8px; align-items: flex-end !important;">
+            <div class="flex row">
+              <div style=""><label>Başlanğıc</label><input class="filter-input" id="fnFilterFrom" type="date"></div>
+              <div style="flex:1;"><label>Son</label><input class="filter-input" id="fnFilterTo" type="date"></div>
+            </div>
+            <div class="flex row">
+              <div style="flex:1"><label>Min məbləğ (₼)</label><input class="filter-input" id="fnFilterMinAmount" type="number" step="0.01"></div>
+              <div style="flex:1"><label>Max məbləğ (₼)</label><input class="filter-input" id="fnFilterMaxAmount" type="number" step="0.01"></div>
+            </div>
           </div>
-          <div class="row wrap">
-            <div style="flex:1 1 150px;">
+          <div class="row wrap checkbox-container">
+            <div style="flex:1">
               <label>Tip</label>
-              <div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:8px;max-height:100px;overflow-y:auto;">
-                <label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;">
-                  <input type="checkbox" name="fnFilterType" value="income" style="width:auto;">
+              <div class="type-check-container" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:8px;max-height:100px;overflow-y:auto;">
+                <label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;min-width:0;flex-shrink:1">
+                  <input type="checkbox" name="fnFilterType" value="income" style="width:auto;min-width:0;flex-shrink:1;white-space:normal">
                   <span style="font-size:13px;">Gəlir</span>
                 </label>
-                <label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;">
-                  <input type="checkbox" name="fnFilterType" value="expense" style="width:auto;">
+                <label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;min-width:0;flex-shrink:1">
+                  <input type="checkbox" name="fnFilterType" value="expense" style="width:auto;min-width:0;white-space:normal">
                   <span style="font-size:13px;">Xərc</span>
                 </label>
               </div>
             </div>
-            <div style="flex:2 1 200px;">
-              <label>Kateqoriya</label>
-              <div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:8px;max-height:150px;overflow-y:auto;">
-                ${categoryCheckboxes || '<div class="tiny" style="color:var(--muted);">Kateqoriya yoxdur</div>'}
+            <div class="flex row" style="min-width:0; flex-shrink:1">
+              <div style="flex:1 1 0;">
+                <label style="display:flex;min-width:0; flex-shrink:1">Kateqoriya</label>
+                <div class="scrollable" style="background:#0f172a;border:1px solid var(--border);min-width:0; border-radius:8px;padding:8px;max-height:150px;overflow-y:auto;">
+                  ${categoryCheckboxes || '<div class="tiny" style="color:var(--muted);">Kateqoriya yoxdur</div>'}
+                </div>
               </div>
-            </div>
-            <div style="flex:2 1 200px;">
-              <label>Kontragent</label>
-              <div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:8px;max-height:150px;overflow-y:auto;">
-                ${counterpartyCheckboxes || '<div class="tiny" style="color:var(--muted);">Kontragent yoxdur</div>'}
-              </div>
+              <div style="flex:1 1 0;">
+                <label style="display:flex;min-width:0; flex-shrink:1">Kontragent</label>
+                <div class="scrollable" style="background:#0f172a;border:1px solid var(--border);min-width:0;border-radius:8px;padding:8px;max-height:150px;overflow-y:auto;">
+                  ${counterpartyCheckboxes || '<div class="tiny" style="color:var(--muted);">Kontragent yoxdur</div>'}
+                </div>
+              </div>  
             </div>
           </div>
           <div class="row" style="justify-content:flex-end;margin-top:8px;gap:8px;">
@@ -1100,10 +1177,15 @@ function renderFinance() {
         
         <!-- STATİSTİKA -->
         <div class="row wrap" style="margin-bottom:8px;gap:8px;">
-          <div class="pill"><span class="muted">Gəlir:</span> <b id="fnStatsIncome">${fmtMoney(totalIncome)}</b></div>
-          <div class="pill"><span class="muted">Xərc:</span> <b id="fnStatsExpense">${fmtMoney(totalExpense)}</b></div>
-          <div class="pill"><span class="muted">Xalis:</span> <b id="fnStatsNet">${fmtMoney(netProfit)}</b> <span id="fnStatsNetBadge" class="${netProfit >= 0 ? 'badge ok' : 'badge bad'}">${netProfit >= 0 ? 'OK' : 'NEG'}</span></div>
-          <div class="pill"><span class="muted">Say:</span> <b id="fnStatsCount">${APP.finances.length}</b></div>
+          <div>
+            <div class="pill"><span class="muted">Gəlir:</span> <b id="fnStatsIncome">${fmtMoney(totalIncome)}</b></div>
+            <div class="pill"><span class="muted">Xərc:</span> <b id="fnStatsExpense">${fmtMoney(totalExpense)}</b></div>
+          </div>
+
+          <div>
+            <div class="pill"><span class="muted">Xalis:</span> <b id="fnStatsNet">${fmtMoney(netProfit)}</b> <span id="fnStatsNetBadge" class="${netProfit >= 0 ? 'badge ok' : 'badge bad'}">${netProfit >= 0 ? 'OK' : 'NEG'}</span></div>
+            <div class="pill"><span class="muted">Say:</span> <b id="fnStatsCount">${APP.finances.length}</b></div>
+          </div>
         </div>
         
         <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
@@ -1193,12 +1275,12 @@ function renderFinance() {
             <td class="right">${fmtMoney(apRemaining(e))}</td>
             <td>${e.status||""}</td>
             <td class="right"><button class="ghost" onclick="addAPPayPrompt('${e.id}')">Ödəniş</button></td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Kreditor yoxdur</td></tr>';
+          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Borc yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
-              <div class="section-title">Debitorlar (AR)</div>
+              <div class="section-title">Borclular (AR)</div>
               <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
                 <button onclick="exportToExcel('ar')">📥 Excel yüklə</button>
               </div>
@@ -1218,7 +1300,7 @@ function renderFinance() {
             </div>
 
             <div class="card">
-              <div class="section-title">Kreditorlar (AP)</div>
+              <div class="section-title">Borclar (AP)</div>
               <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
                 <button onclick="exportToExcel('ap')">📥 Excel yüklə</button>
               </div>
