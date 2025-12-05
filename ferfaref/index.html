@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="az">
   <head>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Material anbarı (kq) • Maliyyə (Gəlir/Xərc, AR/AP) — AZN</title>
@@ -71,6 +78,15 @@
         display: grid;
         gap: 12px;
       }
+
+      .payment-btn {
+        cursor: pointer;
+        transition: all;
+        transition-duration: 0.3s;
+      }
+      .payment-btn:hover {
+        transform: scale(1.5);
+      }
       .cols-2 {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -133,7 +149,8 @@
           overflow-x: auto;
           white-space: nowrap;
         }
-        th, td {
+        th,
+        td {
           padding: 8px 6px;
           font-size: 12px;
         }
@@ -144,7 +161,10 @@
           flex: 1 1 100% !important;
           width: 100%;
         }
-        input, select, textarea, button {
+        input,
+        select,
+        textarea,
+        button {
           font-size: 16px;
         }
         .tabs {
@@ -332,13 +352,17 @@
       .grid.cols-2 .card {
         height: fit-content;
       }
-      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
 
       input.filter-input {
         width: 100% !important;
       }
 
-      .filter-inputs-container > div ,
+      .filter-inputs-container > div,
       .filter-inputs-container > div > * {
         flex-shrink: 1;
         min-width: 0;
@@ -364,7 +388,102 @@
         column-gap: 30px;
       }
 
-      @media screen  and (max-width: 420px) {
+      /* Paymment modal */
+      .payment-overlay {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(17, 24, 39, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 200ms ease;
+      }
+
+      .payment-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .payment-modal {
+        width: min(90vw, 420px);
+        background: #ffffff;
+        border-radius: 18px;
+        padding: 1.5rem;
+        box-shadow: 0 25px 70px rgba(15, 23, 42, 0.25);
+        transform: translateY(10px) scale(0.96);
+        animation: modalPop 220ms ease forwards;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      @keyframes modalPop {
+        to {
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .payment-modal h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #111827;
+      }
+
+      .payment-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        max-height: 260px;
+        overflow-y: auto;
+      }
+
+      .payment-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.95rem;
+        color: #1f2937;
+      }
+
+      .payment-empty {
+        padding: 1rem;
+        text-align: center;
+        color: #6b7280;
+        border: 1px dashed #d1d5db;
+        border-radius: 12px;
+      }
+
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .close-btn {
+        padding: 0.55rem 1.4rem;
+        border: none;
+        border-radius: 999px;
+        background: #0ea5e9;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 150ms ease;
+      }
+
+      .close-btn:hover {
+        background: #0284c7;
+      }
+
+      @media (max-width: 480px) {
+        .payment-modal {
+          padding: 1.25rem;
+        }
+      }
+
+      @media screen and (max-width: 420px) {
         .muted {
           font-size: 14px;
         }
@@ -374,36 +493,37 @@
         }
       }
 
-      @media screen  and (max-width: 353px) {
+      @media screen and (max-width: 353px) {
         .filter-inputs-container {
           flex-wrap: wrap;
         }
       }
 
       .scrollable::-webkit-scrollbar {
-  width: 8px;
-}
+        width: 8px;
+      }
 
-.scrollable::-webkit-scrollbar-track {
-  background: #0f172a;     
-  border-radius: 8px;
-}
+      .scrollable::-webkit-scrollbar-track {
+        background: #0f172a;
+        border-radius: 8px;
+      }
 
-.scrollable::-webkit-scrollbar-thumb {
-  background: #334155;     
-  border-radius: 8px;
-}
+      .scrollable::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 8px;
+      }
 
-.scrollable::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-}
+      .scrollable::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
     </style>
   </head>
   <body>
     <div class="app">
       <h1>Material anbarı (kq) + Maliyyə (AR/AP)</h1>
       <div class="sub">
-        Valyuta: <b>AZN (₼)</b> • Ölçü vahidi: <b>kq</b> • Backend API: <b id="baseUrl">http://116.203.51.133:8085/stock</b>
+        Valyuta: <b>AZN (₼)</b> • Ölçü vahidi: <b>kq</b> • Backend API:
+        <b id="baseUrl">http://116.203.51.133:8085/stock</b>
       </div>
 
       <!-- KPI -->
@@ -442,7 +562,8 @@
       <div id="view"></div>
 
       <div class="foot">
-        Məsləhət: əvvəlcə material kataloqunu əlavə edin, sonra gələn və silinən qeydləri yaradın.
+        Məsləhət: əvvəlcə material kataloqunu əlavə edin, sonra gələn və silinən
+        qeydləri yaradın.
       </div>
     </div>
 
@@ -454,10 +575,10 @@
       };
 
       // helperlər
-      const $ = s => document.querySelector(s);
+      const $ = (s) => document.querySelector(s);
       const fmtN = (n, d = 2) =>
         (n ?? 0).toLocaleString(undefined, { maximumFractionDigits: d });
-      const fmtMoney = n => `₼ ${fmtN(n, 2)}`;
+      const fmtMoney = (n) => `₼ ${fmtN(n, 2)}`;
       const today = () => new Date().toISOString().slice(0, 10);
 
       // TABS - İSTEHSAL VƏ İSTEHSAL ANBARI SİLİNDİ
@@ -466,7 +587,7 @@
           { id: "materials", name: "Materiallar" },
           { id: "receipt", name: "Qəbul" },
           { id: "issue", name: "Silmə" },
-          { id: "stock", name: "Anbar" }
+          { id: "stock", name: "Anbar" },
         ],
 
         products: [
@@ -479,8 +600,8 @@
         finance: [
           { id: "finance", name: "Maliyyə (Gəlir/Xərc)" },
           { id: "arap", name: "Borclu/Borc (AR/AP)" },
-          { id: "reports", name: "Hesabatlar" }
-        ]
+          { id: "reports", name: "Hesabatlar" },
+        ],
       };
       let currentTab = "materials";
 
@@ -520,44 +641,53 @@
           })
           .join("");
       }
-      
+
       async function switchTab(id) {
         currentTab = id;
         renderTabs();
-        
+
         // Loading göstər
-        $("#view").innerHTML = '<div class="card" style="text-align:center;padding:40px;"><div class="loader"></div><div style="margin-top:12px;">Yüklənir...</div></div>';
-        
+        $("#view").innerHTML =
+          '<div class="card" style="text-align:center;padding:40px;"><div class="loader"></div><div style="margin-top:12px;">Yüklənir...</div></div>';
+
         try {
           // avtomatik fetch - AWAIT ilə
           if (id === "materials") {
             await fetchMaterials();
-          } else if (id === "receipt") { 
+          } else if (id === "receipt") {
             await Promise.all([fetchMaterials(), fetchReceipts()]);
-          } else if (id === "issue") { 
+          } else if (id === "issue") {
             await Promise.all([fetchMaterials(), fetchIssues()]);
           } else if (id === "stock") {
             await fetchStock();
           } else if (id === "products") {
             await fetchProducts();
-          } else if (id === "storetransfer") { 
+          } else if (id === "storetransfer") {
             await Promise.all([fetchProducts(), fetchStoreTransfers()]);
           } else if (id === "storestock") {
             await fetchStoreStock();
-          } else if (id === "storesales") { 
-            await Promise.all([fetchProducts(), fetchStoreStock(), fetchStoreSales()]);
+          } else if (id === "storesales") {
+            await Promise.all([
+              fetchProducts(),
+              fetchStoreStock(),
+              fetchStoreSales(),
+            ]);
           } else if (id === "finance") {
             await fetchFinances();
           } else if (id === "arap") {
             await fetchARAP();
-          } else if (id === "reports") { 
-            await Promise.all([fetchMaterials(), fetchReceipts(), fetchIssues()]);
+          } else if (id === "reports") {
+            await Promise.all([
+              fetchMaterials(),
+              fetchReceipts(),
+              fetchIssues(),
+            ]);
             await fetchPL();
           }
         } catch (e) {
           console.error("Tab yüklənmə xətası:", e);
         }
-        
+
         // Data yükləndi, indi render et
         renderView();
       }
@@ -565,9 +695,12 @@
       // ====== API helpers ======
       async function apiGET(path) {
         try {
-          const res = await fetch(BASE + path, { method: "GET", headers: API_HEADERS });
+          const res = await fetch(BASE + path, {
+            method: "GET",
+            headers: API_HEADERS,
+          });
           if (!res.ok) {
-            const text = await res.text().catch(()=>"");
+            const text = await res.text().catch(() => "");
             throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return await res.json();
@@ -577,7 +710,7 @@
           throw e;
         }
       }
-      
+
       async function apiPOST(path, body) {
         try {
           const res = await fetch(BASE + path, {
@@ -586,7 +719,7 @@
             body: JSON.stringify(body),
           });
           if (!res.ok) {
-            const text = await res.text().catch(()=>"");
+            const text = await res.text().catch(() => "");
             throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return await res.json();
@@ -596,7 +729,7 @@
           throw e;
         }
       }
-      
+
       async function apiPUT(path, body) {
         try {
           const res = await fetch(BASE + path, {
@@ -605,7 +738,7 @@
             body: JSON.stringify(body),
           });
           if (!res.ok) {
-            const text = await res.text().catch(()=>"");
+            const text = await res.text().catch(() => "");
             throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return await res.json();
@@ -623,7 +756,7 @@
             headers: API_HEADERS,
           });
           if (!res.ok) {
-            const text = await res.text().catch(()=>"");
+            const text = await res.text().catch(() => "");
             throw new Error(`HTTP ${res.status}: ${text}`);
           }
           return res.status === 204 ? {} : await res.json();
@@ -641,21 +774,21 @@
           if (currentTab === "materials") renderMaterials();
         } catch (e) {}
       }
-      
+
       async function fetchReceipts() {
         try {
           APP.receipts = await apiGET("/api/receipts");
           if (currentTab === "receipt") renderReceipt();
         } catch (e) {}
       }
-      
+
       async function fetchIssues() {
         try {
           APP.issues = await apiGET("/api/issues");
           if (currentTab === "issue") renderIssue();
         } catch (e) {}
       }
-      
+
       async function fetchStock() {
         try {
           APP.stock = await apiGET("/api/stock/snapshot");
@@ -666,14 +799,14 @@
           updateKPIBox();
         } catch (e) {}
       }
-      
+
       async function fetchFinances() {
         try {
           APP.finances = await apiGET("/api/finances");
           renderFinance();
         } catch (e) {}
       }
-      
+
       async function fetchARAP() {
         try {
           APP.ar = await apiGET("/api/ar");
@@ -681,10 +814,12 @@
           renderARAP();
         } catch (e) {}
       }
-      
+
       async function fetchPL() {
         try {
-          const from = $("#rpFrom") ? $("#rpFrom").value : today().slice(0, 7) + "-01";
+          const from = $("#rpFrom")
+            ? $("#rpFrom").value
+            : today().slice(0, 7) + "-01";
           const to = $("#rpTo") ? $("#rpTo").value : today();
           APP.pl = await apiGET(`/api/stock/profit-loss?from=${from}&to=${to}`);
           APP.kpi = await apiGET(`/api/stock/kpi?from=${from}&to=${to}`);
@@ -704,7 +839,11 @@
       async function fetchProductionStock() {
         try {
           APP.productionStock = await apiGET("/api/warehouse-stock");
-          console.log("Production Stock yükləndi:", APP.productionStock.length, "məhsul");
+          console.log(
+            "Production Stock yükləndi:",
+            APP.productionStock.length,
+            "məhsul"
+          );
           if (currentTab === "storetransfer") {
             renderView();
           }
@@ -737,43 +876,58 @@
 
       // ====== RENDER / UI funksiyaları ======
       function updateKPIBox() {
-        let onHandKg = 0, inv = 0;
-        
+        let onHandKg = 0,
+          inv = 0;
+
         if (Array.isArray(APP.stock) && APP.stock.length) {
-          APP.stock.forEach(s => { 
-            onHandKg += Number(s.onHandKg || 0); 
-            inv += Number(s.inventoryValue || 0); 
+          APP.stock.forEach((s) => {
+            onHandKg += Number(s.onHandKg || 0);
+            inv += Number(s.inventoryValue || 0);
           });
         }
-        
+
         $("#kpiOnHandKg").textContent = fmtN(onHandKg, 3);
         $("#kpiInvValue").textContent = fmtMoney(inv);
-        
+
         if (APP.kpi) {
           $("#kpiRevenue").textContent = fmtMoney(APP.kpi.revenue || 0);
           $("#kpiNet").textContent = fmtMoney(APP.kpi.netProfit || 0);
           const badge = $("#kpiNetBadge");
-          if ((APP.kpi.netProfit || 0) >= 0) { 
-            badge.textContent = "OK"; 
-            badge.className = "badge ok"; 
-          } else { 
-            badge.textContent = "NEG"; 
-            badge.className = "badge bad"; 
+          if ((APP.kpi.netProfit || 0) >= 0) {
+            badge.textContent = "OK";
+            badge.className = "badge ok";
+          } else {
+            badge.textContent = "NEG";
+            badge.className = "badge bad";
           }
         }
       }
 
       // --- MATERIALS ---
       function renderMaterials() {
-        const list = APP.materials.map(x => `
+        const list =
+          APP.materials
+            .map(
+              (x) => `
           <tr>
             <td>${x.code || ""}</td>
             <td>${x.name || ""}</td>
             <td>kq</td>
             <td class="right">${fmtN(x.minLevel ?? 0, 3)}</td>
-            <td>${x.isActive === false ? '<span class="badge warn">arxiv</span>' : '<span class="badge ok">aktiv</span>'}</td>
-            <td class="right"><button class="ghost" onclick="toggleMat('${x.id}')">${x.isActive === false ? "Arxivdən çıxar" : "Arxivlə"}</button></td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Material yoxdur</td></tr>';
+            <td>${
+              x.isActive === false
+                ? '<span class="badge warn">arxiv</span>'
+                : '<span class="badge ok">aktiv</span>'
+            }</td>
+            <td class="right"><button class="ghost" onclick="toggleMat('${
+              x.id
+            }')">${
+                x.isActive === false ? "Arxivdən çıxar" : "Arxivlə"
+              }</button></td>
+          </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Material yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -802,18 +956,21 @@
         const code = $("#mCode").value.trim();
         const name = $("#mName").value.trim();
         const min = Number($("#mMin").value || 0);
-        if (!code || !name) { alert("Kod və adı daxil edin"); return; }
+        if (!code || !name) {
+          alert("Kod və adı daxil edin");
+          return;
+        }
         try {
-          await apiPOST("/api/materials", { 
-            code, 
-            name, 
-            uom: "kg", 
-            minLevel: min, 
-            isActive: true 
+          await apiPOST("/api/materials", {
+            code,
+            name,
+            uom: "kg",
+            minLevel: min,
+            isActive: true,
           });
           await fetchMaterials();
-          $("#mCode").value = ""; 
-          $("#mName").value = ""; 
+          $("#mCode").value = "";
+          $("#mName").value = "";
           $("#mMin").value = "0";
         } catch (e) {}
       }
@@ -827,13 +984,19 @@
 
       // --- RECEIPTS ---
       function renderReceipt() {
-        const options = APP.materials.filter(x => x.isActive !== false)
-          .map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`).join("");
-          
-        const items = APP.receipts.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(r => {
-            const mat = APP.materials.find(m => m.id === r.materialId) || {};
-            return `<tr>
+        const options = APP.materials
+          .filter((x) => x.isActive !== false)
+          .map((x) => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
+          .join("");
+
+        const items =
+          APP.receipts
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map((r) => {
+              const mat =
+                APP.materials.find((m) => m.id === r.materialId) || {};
+              return `<tr>
               <td>${r.date}</td>
               <td>${mat.code || ""}</td>
               <td>${mat.name || ""}</td>
@@ -843,7 +1006,9 @@
               <td>${r.supplier || ""}</td>
               <td class="tiny">${r.note || ""}</td>
             </tr>`;
-          }).join("") || '<tr><td colspan="8" class="tiny">Qəbul yoxdur</td></tr>';
+            })
+            .join("") ||
+          '<tr><td colspan="8" class="tiny">Qəbul yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -879,21 +1044,21 @@
         const date = $("#rcDate").value || today();
         const supplier = $("#rcSupplier").value.trim();
         const note = $("#rcNote").value.trim();
-        
-        if (!materialId || qty <= 0 || price < 0) { 
-          alert("Material, miqdar (>0) və qiymət (>=0) vacibdir"); 
-          return; 
+
+        if (!materialId || qty <= 0 || price < 0) {
+          alert("Material, miqdar (>0) və qiymət (>=0) vacibdir");
+          return;
         }
-        
+
         try {
-          await apiPOST("/api/receipts", { 
-            date, 
-            materialId, 
-            qtyKg: qty, 
-            pricePerKg: price, 
-            totalCost: qty * price, 
-            supplier, 
-            note 
+          await apiPOST("/api/receipts", {
+            date,
+            materialId,
+            qtyKg: qty,
+            pricePerKg: price,
+            totalCost: qty * price,
+            supplier,
+            note,
           });
           await fetchReceipts();
           await fetchStock();
@@ -906,13 +1071,19 @@
 
       // --- ISSUES ---
       function renderIssue() {
-        const options = APP.materials.filter(x => x.isActive !== false)
-          .map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`).join("");
-          
-        const items = APP.issues.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(i => {
-            const mat = APP.materials.find(m => m.id === i.materialId) || {};
-            return `<tr>
+        const options = APP.materials
+          .filter((x) => x.isActive !== false)
+          .map((x) => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
+          .join("");
+
+        const items =
+          APP.issues
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map((i) => {
+              const mat =
+                APP.materials.find((m) => m.id === i.materialId) || {};
+              return `<tr>
               <td>${i.date}</td>
               <td>${mat.code || ""}</td>
               <td>${mat.name || ""}</td>
@@ -922,7 +1093,9 @@
               <td>${i.jobRef || ""}</td>
               <td class="tiny">${i.note || ""}</td>
             </tr>`;
-          }).join("") || '<tr><td colspan="8" class="tiny">Silmə yoxdur</td></tr>';
+            })
+            .join("") ||
+          '<tr><td colspan="8" class="tiny">Silmə yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -956,26 +1129,34 @@
         const date = $("#isDate").value || today();
         const jobRef = $("#isJob").value.trim();
         const note = $("#isNote").value.trim();
-        
-        if (!materialId || qty <= 0) { 
-          alert("Material və miqdar (>0) vacibdir"); 
-          return; 
+
+        if (!materialId || qty <= 0) {
+          alert("Material və miqdar (>0) vacibdir");
+          return;
         }
-        
+
         try {
-          const receipts = APP.receipts.filter(r => r.materialId === materialId);
-          const totalQty = receipts.reduce((a,b) => a + Number(b.qtyKg || 0), 0);
-          const totalCost = receipts.reduce((a,b) => a + Number(b.totalCost || 0), 0);
+          const receipts = APP.receipts.filter(
+            (r) => r.materialId === materialId
+          );
+          const totalQty = receipts.reduce(
+            (a, b) => a + Number(b.qtyKg || 0),
+            0
+          );
+          const totalCost = receipts.reduce(
+            (a, b) => a + Number(b.totalCost || 0),
+            0
+          );
           const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
-          
-          await apiPOST("/api/issues", { 
-            date, 
-            materialId, 
+
+          await apiPOST("/api/issues", {
+            date,
+            materialId,
             qtyKg: qty,
             avgCostUsed: avgCost,
             totalCostUsed: avgCost * qty,
-            jobRef, 
-            note 
+            jobRef,
+            note,
           });
           await fetchIssues();
           await fetchStock();
@@ -987,17 +1168,23 @@
 
       // --- STOCK ---
       function renderStock() {
-        const rows = (APP.stock || []).map(r => {
-          const health = r.onHandKg <= (r.minLevel || 0) ? "warn" : "ok";
-          return `<tr>
+        const rows =
+          (APP.stock || [])
+            .map((r) => {
+              const health = r.onHandKg <= (r.minLevel || 0) ? "warn" : "ok";
+              return `<tr>
             <td>${r.code || ""}</td>
             <td>${r.name || ""}</td>
             <td class="right">${fmtN(r.onHandKg, 3)}</td>
             <td class="right">${fmtMoney(r.avgCostPerKg)}</td>
             <td class="right">${fmtMoney(r.inventoryValue)}</td>
-            <td><span class="badge ${health}">${r.status === "low" || health === "warn" ? "LOW" : "OK"}</span></td>
+            <td><span class="badge ${health}">${
+                r.status === "low" || health === "warn" ? "LOW" : "OK"
+              }</span></td>
           </tr>`;
-        }).join("") || '<tr><td colspan="6" class="tiny">Anbar məlumatı yoxdur</td></tr>';
+            })
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Anbar məlumatı yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="card">
@@ -1010,107 +1197,151 @@
       }
 
       // --- FINANCE ---
-function renderFinance() {
-  // Filtr funksiyası
-  function filterFinances() {
-    const fromDate = $("#fnFilterFrom")?.value;
-    const toDate = $("#fnFilterTo")?.value;
-    
-    // Checkbox-lardan seçilmiş dəyərləri toplayırıq
-    const selectedTypes = Array.from(document.querySelectorAll('input[name="fnFilterType"]:checked')).map(cb => cb.value);
-    const selectedCategories = Array.from(document.querySelectorAll('input[name="fnFilterCategory"]:checked')).map(cb => cb.value);
-    const selectedCounterparties = Array.from(document.querySelectorAll('input[name="fnFilterCounterparty"]:checked')).map(cb => cb.value);
-    
-    const minAmount = Number($("#fnFilterMinAmount")?.value || 0);
-    const maxAmount = Number($("#fnFilterMaxAmount")?.value || Infinity);
-    
-    let filtered = APP.finances.slice();
-    
-    // Tarix filtri
-    if (fromDate) filtered = filtered.filter(f => f.date >= fromDate);
-    if (toDate) filtered = filtered.filter(f => f.date <= toDate);
-    
-    // Tip filtri
-    if (selectedTypes.length > 0) {
-      filtered = filtered.filter(f => selectedTypes.includes(f.type));
-    }
-    
-    // Kateqoriya filtri
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter(f => selectedCategories.includes(f.category));
-    }
-    
-    // Kontragent filtri
-    if (selectedCounterparties.length > 0) {
-      filtered = filtered.filter(f => selectedCounterparties.includes(f.counterparty));
-    }
-    
-    // Məbləğ filtri
-    filtered = filtered.filter(f => {
-      const amt = f.amountAzn || 0;
-      return amt >= minAmount && amt <= maxAmount;
-    });
-    
-    // Statistika
-    const totalIncome = filtered.filter(f => f.type === "income").reduce((a,b) => a + (b.amountAzn||0), 0);
-    const totalExpense = filtered.filter(f => f.type === "expense").reduce((a,b) => a + (b.amountAzn||0), 0);
-    const netProfit = totalIncome - totalExpense;
-    
-    $("#fnStatsIncome").textContent = fmtMoney(totalIncome);
-    $("#fnStatsExpense").textContent = fmtMoney(totalExpense);
-    $("#fnStatsNet").textContent = fmtMoney(netProfit);
-    $("#fnStatsNetBadge").className = netProfit >= 0 ? "badge ok" : "badge bad";
-    $("#fnStatsCount").textContent = filtered.length;
-    
-    const list = filtered.sort((a,b)=> (b.date||"").localeCompare(a.date||""))
-      .map(f => `<tr>
+      function renderFinance() {
+        // Filtr funksiyası
+        function filterFinances() {
+          const fromDate = $("#fnFilterFrom")?.value;
+          const toDate = $("#fnFilterTo")?.value;
+
+          // Checkbox-lardan seçilmiş dəyərləri toplayırıq
+          const selectedTypes = Array.from(
+            document.querySelectorAll('input[name="fnFilterType"]:checked')
+          ).map((cb) => cb.value);
+          const selectedCategories = Array.from(
+            document.querySelectorAll('input[name="fnFilterCategory"]:checked')
+          ).map((cb) => cb.value);
+          const selectedCounterparties = Array.from(
+            document.querySelectorAll(
+              'input[name="fnFilterCounterparty"]:checked'
+            )
+          ).map((cb) => cb.value);
+
+          const minAmount = Number($("#fnFilterMinAmount")?.value || 0);
+          const maxAmount = Number($("#fnFilterMaxAmount")?.value || Infinity);
+
+          let filtered = APP.finances.slice();
+
+          // Tarix filtri
+          if (fromDate) filtered = filtered.filter((f) => f.date >= fromDate);
+          if (toDate) filtered = filtered.filter((f) => f.date <= toDate);
+
+          // Tip filtri
+          if (selectedTypes.length > 0) {
+            filtered = filtered.filter((f) => selectedTypes.includes(f.type));
+          }
+
+          // Kateqoriya filtri
+          if (selectedCategories.length > 0) {
+            filtered = filtered.filter((f) =>
+              selectedCategories.includes(f.category)
+            );
+          }
+
+          // Kontragent filtri
+          if (selectedCounterparties.length > 0) {
+            filtered = filtered.filter((f) =>
+              selectedCounterparties.includes(f.counterparty)
+            );
+          }
+
+          // Məbləğ filtri
+          filtered = filtered.filter((f) => {
+            const amt = f.amountAzn || 0;
+            return amt >= minAmount && amt <= maxAmount;
+          });
+
+          // Statistika
+          const totalIncome = filtered
+            .filter((f) => f.type === "income")
+            .reduce((a, b) => a + (b.amountAzn || 0), 0);
+          const totalExpense = filtered
+            .filter((f) => f.type === "expense")
+            .reduce((a, b) => a + (b.amountAzn || 0), 0);
+          const netProfit = totalIncome - totalExpense;
+
+          $("#fnStatsIncome").textContent = fmtMoney(totalIncome);
+          $("#fnStatsExpense").textContent = fmtMoney(totalExpense);
+          $("#fnStatsNet").textContent = fmtMoney(netProfit);
+          $("#fnStatsNetBadge").className =
+            netProfit >= 0 ? "badge ok" : "badge bad";
+          $("#fnStatsCount").textContent = filtered.length;
+
+          const list =
+            filtered
+              .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+              .map(
+                (f) => `<tr>
         <td>${f.date}</td>
         <td>${f.type === "income" ? "Gəlir" : "Xərc"}</td>
-        <td>${f.category||""}</td>
-        <td>${f.counterparty||""}</td>
-        <td class="right">${fmtMoney(f.amountAzn||0)}</td>
-        <td class="tiny">${f.note||""}</td>
-      </tr>`).join("") || '<tr><td colspan="6" class="tiny">Bu filtrə uyğun qeyd yoxdur</td></tr>';
-    
-    $("#financeTableBody").innerHTML = list;
-  }
-  
-  // Unikal dəyərləri çıxaraq
-  const uniqueCategories = [...new Set(APP.finances.map(f => f.category).filter(Boolean))].sort();
-  const uniqueCounterparties = [...new Set(APP.finances.map(f => f.counterparty).filter(Boolean))].sort();
-  
-  // Checkbox-lar ilə seçimlər
-  const categoryCheckboxes = uniqueCategories.map(c => 
-    `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;min-width:0;flex-shrink:1">
+        <td>${f.category || ""}</td>
+        <td>${f.counterparty || ""}</td>
+        <td class="right">${fmtMoney(f.amountAzn || 0)}</td>
+        <td class="tiny">${f.note || ""}</td>
+      </tr>`
+              )
+              .join("") ||
+            '<tr><td colspan="6" class="tiny">Bu filtrə uyğun qeyd yoxdur</td></tr>';
+
+          $("#financeTableBody").innerHTML = list;
+        }
+
+        // Unikal dəyərləri çıxaraq
+        const uniqueCategories = [
+          ...new Set(APP.finances.map((f) => f.category).filter(Boolean)),
+        ].sort();
+        const uniqueCounterparties = [
+          ...new Set(APP.finances.map((f) => f.counterparty).filter(Boolean)),
+        ].sort();
+
+        // Checkbox-lar ilə seçimlər
+        const categoryCheckboxes = uniqueCategories
+          .map(
+            (c) =>
+              `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;min-width:0;flex-shrink:1">
       <input type="checkbox" name="fnFilterCategory" value="${c}" style="width:auto;">
       <span style="font-size:13px;">${c}</span>
     </label>`
-  ).join("");
-  
-  const counterpartyCheckboxes = uniqueCounterparties.map(c => 
-    `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;">
+          )
+          .join("");
+
+        const counterpartyCheckboxes = uniqueCounterparties
+          .map(
+            (c) =>
+              `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;">
       <input type="checkbox" name="fnFilterCounterparty" value="${c}" style="width:auto;">
       <span style="font-size:13px;">${c}</span>
     </label>`
-  ).join("");
-  
-  // İlkin list
-  const list = (APP.finances || []).slice().sort((a,b)=> (b.date||"").localeCompare(a.date||""))
-    .map(f => `<tr>
+          )
+          .join("");
+
+        // İlkin list
+        const list =
+          (APP.finances || [])
+            .slice()
+            .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+            .map(
+              (f) => `<tr>
       <td>${f.date}</td>
       <td>${f.type === "income" ? "Gəlir" : "Xərc"}</td>
-      <td>${f.category||""}</td>
-      <td>${f.counterparty||""}</td>
-      <td class="right">${fmtMoney(f.amountAzn||0)}</td>
-      <td class="tiny">${f.note||""}</td>
-    </tr>`).join("") || '<tr><td colspan="6" class="tiny">Qeyd yoxdur</td></tr>';
-  
-  // Statistika
-  const totalIncome = APP.finances.filter(f => f.type === "income").reduce((a,b) => a + (b.amountAzn||0), 0);
-  const totalExpense = APP.finances.filter(f => f.type === "expense").reduce((a,b) => a + (b.amountAzn||0), 0);
-  const netProfit = totalIncome - totalExpense;
-    
-  $("#view").innerHTML = `
+      <td>${f.category || ""}</td>
+      <td>${f.counterparty || ""}</td>
+      <td class="right">${fmtMoney(f.amountAzn || 0)}</td>
+      <td class="tiny">${f.note || ""}</td>
+    </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Qeyd yoxdur</td></tr>';
+
+        // Statistika
+        const totalIncome = APP.finances
+          .filter((f) => f.type === "income")
+          .reduce((a, b) => a + (b.amountAzn || 0), 0);
+        const totalExpense = APP.finances
+          .filter((f) => f.type === "expense")
+          .reduce((a, b) => a + (b.amountAzn || 0), 0);
+        const netProfit = totalIncome - totalExpense;
+
+        $("#view").innerHTML = `
     <div class="grid cols-2">
       <div class="card">
         <div class="section-title">Gəlir / Xərc</div>
@@ -1158,13 +1389,19 @@ function renderFinance() {
               <div style="flex:1 1 0;">
                 <label style="display:flex;min-width:0; flex-shrink:1">Kateqoriya</label>
                 <div class="scrollable" style="background:#0f172a;border:1px solid var(--border);min-width:0; border-radius:8px;padding:8px;max-height:150px;overflow-y:auto;">
-                  ${categoryCheckboxes || '<div class="tiny" style="color:var(--muted);">Kateqoriya yoxdur</div>'}
+                  ${
+                    categoryCheckboxes ||
+                    '<div class="tiny" style="color:var(--muted);">Kateqoriya yoxdur</div>'
+                  }
                 </div>
               </div>
               <div style="flex:1 1 0;">
                 <label style="display:flex;min-width:0; flex-shrink:1">Kontragent</label>
                 <div class="scrollable" style="background:#0f172a;border:1px solid var(--border);min-width:0;border-radius:8px;padding:8px;max-height:150px;overflow-y:auto;">
-                  ${counterpartyCheckboxes || '<div class="tiny" style="color:var(--muted);">Kontragent yoxdur</div>'}
+                  ${
+                    counterpartyCheckboxes ||
+                    '<div class="tiny" style="color:var(--muted);">Kontragent yoxdur</div>'
+                  }
                 </div>
               </div>  
             </div>
@@ -1178,13 +1415,23 @@ function renderFinance() {
         <!-- STATİSTİKA -->
         <div class="row wrap" style="margin-bottom:8px;gap:8px;">
           <div>
-            <div class="pill"><span class="muted">Gəlir:</span> <b id="fnStatsIncome">${fmtMoney(totalIncome)}</b></div>
-            <div class="pill"><span class="muted">Xərc:</span> <b id="fnStatsExpense">${fmtMoney(totalExpense)}</b></div>
+            <div class="pill"><span class="muted">Gəlir:</span> <b id="fnStatsIncome">${fmtMoney(
+              totalIncome
+            )}</b></div>
+            <div class="pill"><span class="muted">Xərc:</span> <b id="fnStatsExpense">${fmtMoney(
+              totalExpense
+            )}</b></div>
           </div>
 
           <div>
-            <div class="pill"><span class="muted">Xalis:</span> <b id="fnStatsNet">${fmtMoney(netProfit)}</b> <span id="fnStatsNetBadge" class="${netProfit >= 0 ? 'badge ok' : 'badge bad'}">${netProfit >= 0 ? 'OK' : 'NEG'}</span></div>
-            <div class="pill"><span class="muted">Say:</span> <b id="fnStatsCount">${APP.finances.length}</b></div>
+            <div class="pill"><span class="muted">Xalis:</span> <b id="fnStatsNet">${fmtMoney(
+              netProfit
+            )}</b> <span id="fnStatsNetBadge" class="${
+          netProfit >= 0 ? "badge ok" : "badge bad"
+        }">${netProfit >= 0 ? "OK" : "NEG"}</span></div>
+            <div class="pill"><span class="muted">Say:</span> <b id="fnStatsCount">${
+              APP.finances.length
+            }</b></div>
           </div>
         </div>
         
@@ -1197,23 +1444,29 @@ function renderFinance() {
         </table>
       </div>
     </div>`;
-  
-  // Global funksiyalar
-  window.filterFinances = filterFinances;
-  window.clearFinanceFilter = function() {
-    $("#fnFilterFrom").value = "";
-    $("#fnFilterTo").value = "";
-    $("#fnFilterMinAmount").value = "";
-    $("#fnFilterMaxAmount").value = "";
-    
-    // Bütün checkbox-ları təmizlə
-    document.querySelectorAll('input[name="fnFilterType"]').forEach(cb => cb.checked = false);
-    document.querySelectorAll('input[name="fnFilterCategory"]').forEach(cb => cb.checked = false);
-    document.querySelectorAll('input[name="fnFilterCounterparty"]').forEach(cb => cb.checked = false);
-    
-    filterFinances();
-  };
-}
+
+        // Global funksiyalar
+        window.filterFinances = filterFinances;
+        window.clearFinanceFilter = function () {
+          $("#fnFilterFrom").value = "";
+          $("#fnFilterTo").value = "";
+          $("#fnFilterMinAmount").value = "";
+          $("#fnFilterMaxAmount").value = "";
+
+          // Bütün checkbox-ları təmizlə
+          document
+            .querySelectorAll('input[name="fnFilterType"]')
+            .forEach((cb) => (cb.checked = false));
+          document
+            .querySelectorAll('input[name="fnFilterCategory"]')
+            .forEach((cb) => (cb.checked = false));
+          document
+            .querySelectorAll('input[name="fnFilterCounterparty"]')
+            .forEach((cb) => (cb.checked = false));
+
+          filterFinances();
+        };
+      }
 
       async function addFinance() {
         const type = $("#fnType").value;
@@ -1222,20 +1475,20 @@ function renderFinance() {
         const date = $("#fnDate").value || today();
         const counterparty = $("#fnCp").value.trim();
         const note = $("#fnNote").value.trim();
-        
-        if (!category || amount < 0) { 
-          alert("Kateqoriya və məbləğ daxil edin"); 
-          return; 
+
+        if (!category || amount < 0) {
+          alert("Kateqoriya və məbləğ daxil edin");
+          return;
         }
-        
+
         try {
-          await apiPOST("/api/finances", { 
-            date, 
-            type, 
-            category, 
-            amountAzn: amount, 
-            counterparty, 
-            note 
+          await apiPOST("/api/finances", {
+            date,
+            type,
+            category,
+            amountAzn: amount,
+            counterparty,
+            note,
           });
           await fetchFinances();
           await fetchPL();
@@ -1248,34 +1501,133 @@ function renderFinance() {
 
       // --- AR / AP ---
       function arRemaining(entry) {
-        const paid = (entry.payments || []).reduce((a,b) => a + Number(b.amountAzn || 0), 0);
+        const paid = (entry.payments || []).reduce(
+          (a, b) => a + Number(b.amountAzn || 0),
+          0
+        );
         return (entry.amountAzn || 0) - paid;
       }
-      
-      function apRemaining(entry) { 
-        return arRemaining(entry); 
+
+      function apRemaining(entry) {
+        return arRemaining(entry);
+      }
+
+      // Payments
+      async function showPayments(paymentId) {
+        // const paymentId = event.parentElement.children[0]
+        const overlay = document.createElement("div");
+        overlay.className = "payment-overlay open";
+        overlay.innerHTML = `
+      <div class="payment-modal" role="dialog" aria-modal="true">
+        <h2>Ödəmə Tarixi</h2>
+        <div id="paymentContent">
+          <div class="payment-empty">Yüklənir...</div>
+        </div>
+        <div class="modal-footer">
+          <button class="close-btn" type="button">Bağla</button>
+        </div>
+      </div>
+    `;
+        document.body.appendChild(overlay);
+
+        const closeModal = () => {
+          overlay.classList.remove("open");
+          overlay.addEventListener("transitionend", () => overlay.remove(), {
+            once: true,
+          });
+        };
+
+        overlay.addEventListener("click", (evt) => {
+          if (evt.target === overlay) closeModal();
+        });
+        overlay
+          .querySelector(".close-btn")
+          .addEventListener("click", closeModal);
+        window.addEventListener("keydown", function escListener(evt) {
+          if (evt.key === "Escape") {
+            closeModal();
+            window.removeEventListener("keydown", escListener);
+          }
+        });
+
+        const content = overlay.querySelector("#paymentContent");
+        const endpoint = `https://api.example.com/payments?personId=${encodeURIComponent(
+          paymentId
+        )}`;
+
+        try {
+          const response = await fetch(endpoint);
+          if (!response.ok) throw new Error("Network response was not ok");
+          const data = await response.json();
+          const payments = Array.isArray(data?.payments) ? data.payments : [];
+
+          if (!payments.length) {
+            content.innerHTML = `<div class="payment-empty">Ödəniş tarixçəsi boşdur...</div>`;
+            return;
+          }
+
+          const listItems = payments
+            .map(
+              (payment) => `
+            <li class="payment-item">
+              <span>${payment.date || "Tarix yoxdur"}</span>
+              <span>${payment.amount ?? "--"}</span>
+            </li>`
+            )
+            .join("");
+
+          content.innerHTML = `<ul class="payment-list">${listItems}</ul>`;
+        } catch (error) {
+          console.error("Failed to load payments:", error);
+          content.innerHTML = `<div class="payment-empty">Ödəniş tarixçəsi boşdur...</div>`;
+        }
+        console.log("payments", event);
       }
 
       function renderARAP() {
-        const arRows = (APP.ar || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(e => `<tr>
+        const arRows =
+          (APP.ar || [])
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map(
+              (e) => `<tr>
             <td>${e.date}</td>
-            <td>${e.counterparty||""}</td>
-            <td class="right">${fmtMoney(e.amountAzn||0)}</td>
+            <td>${e.counterparty || ""}</td>
+            <td class="right">${fmtMoney(e.amountAzn || 0)}</td>
             <td class="right">${fmtMoney(arRemaining(e))}</td>
-            <td>${e.status||""}</td>
-            <td class="right"><button class="ghost" onclick="addARPayPrompt('${e.id}')">Ödəniş</button></td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Debitor yoxdur</td></tr>';
+            <td>${e.status || ""}</td>
+            <td class="right"><button class="ghost" onclick="addARPayPrompt('${
+              e.id
+            }')">Ödəniş</button></td>
+            <td onclick="showPayments('${e.id}')" class="payment-btn">
+              <i class="fa-solid fa-clock"></i>  
+            </td>
+            </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Debitor yoxdur</td></tr>';
 
-        const apRows = (APP.ap || []).slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-          .map(e => `<tr>
+        const apRows =
+          (APP.ap || [])
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map(
+              (e) => `<tr>
             <td>${e.date}</td>
-            <td>${e.counterparty||""}</td>
-            <td class="right">${fmtMoney(e.amountAzn||0)}</td>
+            <td>${e.counterparty || ""}</td>
+            <td class="right">${fmtMoney(e.amountAzn || 0)}</td>
             <td class="right">${fmtMoney(apRemaining(e))}</td>
-            <td>${e.status||""}</td>
-            <td class="right"><button class="ghost" onclick="addAPPayPrompt('${e.id}')">Ödəniş</button></td>
-          </tr>`).join("") || '<tr><td colspan="6" class="tiny">Borc yoxdur</td></tr>';
+            <td>${e.status || ""}</td>
+            <td class="right"><button class="ghost" onclick="addAPPayPrompt('${
+              e.id
+            }')">Ödəniş</button></td>
+            <td onclick="showPayments('${e.id}')" class="payment-btn">
+              <i class="fa-solid fa-clock"></i>  
+            </td>
+            </tr>`
+            )
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Borc yoxdur</td></tr>';
 
         $("#view").innerHTML = `
           <div class="grid cols-2">
@@ -1327,20 +1679,20 @@ function renderFinance() {
         const amount = Number($("#arAmt").value);
         const status = $("#arStatus").value;
         const note = $("#arNote").value.trim();
-        
-        if (!counterparty || amount <= 0) { 
-          alert("Kontragent və məbləğ (>0) vacibdir"); 
-          return; 
+
+        if (!counterparty || amount <= 0) {
+          alert("Kontragent və məbləğ (>0) vacibdir");
+          return;
         }
-        
+
         try {
-          await apiPOST("/api/ar", { 
-            counterparty, 
-            date, 
-            amountAzn: amount, 
-            status, 
-            payments: [], 
-            note 
+          await apiPOST("/api/ar", {
+            counterparty,
+            date,
+            amountAzn: amount,
+            status,
+            payments: [],
+            note,
           });
           await fetchARAP();
           $("#arCp").value = "";
@@ -1348,27 +1700,27 @@ function renderFinance() {
           $("#arNote").value = "";
         } catch (e) {}
       }
-      
+
       async function addAP() {
         const counterparty = $("#apCp").value.trim();
         const date = $("#apDate").value || today();
         const amount = Number($("#apAmt").value);
         const status = $("#apStatus").value;
         const note = $("#apNote").value.trim();
-        
-        if (!counterparty || amount <= 0) { 
-          alert("Kontragent və məbləğ (>0) vacibdir"); 
-          return; 
+
+        if (!counterparty || amount <= 0) {
+          alert("Kontragent və məbləğ (>0) vacibdir");
+          return;
         }
-        
+
         try {
-          await apiPOST("/api/ap", { 
-            counterparty, 
-            date, 
-            amountAzn: amount, 
-            status, 
-            payments: [], 
-            note 
+          await apiPOST("/api/ap", {
+            counterparty,
+            date,
+            amountAzn: amount,
+            status,
+            payments: [],
+            note,
           });
           await fetchARAP();
           $("#apCp").value = "";
@@ -1378,34 +1730,34 @@ function renderFinance() {
       }
 
       async function addARPayPrompt(id) {
-        const e = APP.ar.find(x => x.id === id);
+        const e = APP.ar.find((x) => x.id === id);
         if (!e) return;
         const amt = prompt("Ödəniş məbləği (₼)");
         if (amt === null) return;
         const a = Number(amt);
         if (!(a > 0)) return alert("Yanlış məbləğ");
-        
+
         try {
-          await apiPOST(`/api/ar/${id}/payments`, { 
-            date: today(), 
-            amountAzn: a 
+          await apiPOST(`/api/ar/${id}/payments`, {
+            date: today(),
+            amountAzn: a,
           });
           await fetchARAP();
         } catch (e) {}
       }
-      
+
       async function addAPPayPrompt(id) {
-        const e = APP.ap.find(x => x.id === id);
+        const e = APP.ap.find((x) => x.id === id);
         if (!e) return;
         const amt = prompt("Ödəniş məbləği (₼)");
         if (amt === null) return;
         const a = Number(amt);
         if (!(a > 0)) return alert("Yanlış məbləğ");
-        
+
         try {
-          await apiPOST(`/api/ap/${id}/payments`, { 
-            date: today(), 
-            amountAzn: a 
+          await apiPOST(`/api/ap/${id}/payments`, {
+            date: today(),
+            amountAzn: a,
           });
           await fetchARAP();
         } catch (e) {}
@@ -1416,7 +1768,7 @@ function renderFinance() {
         const from = today().slice(0, 7) + "-01";
         const to = today();
         const p = APP.pl || {};
-        
+
         $("#view").innerHTML = `
           <div class="grid cols-2">
             <div class="card">
@@ -1429,11 +1781,21 @@ function renderFinance() {
               <div id="plBox" style="margin-top:8px;">
                 <table>
                   <tbody>
-                    <tr><td>Gəlir</td><td class="right">${fmtMoney(p.revenue || 0)}</td></tr>
-                    <tr><td>Satılan malın maya dəyəri (COGS)</td><td class="right">${fmtMoney(p.cogs || 0)}</td></tr>
-                    <tr><th>Brüt mənfəət</th><th class="right">${fmtMoney(p.grossProfit || 0)}</th></tr>
-                    <tr><td>Digər xərclər</td><td class="right">${fmtMoney(p.expenses || 0)}</td></tr>
-                    <tr><th>Xalis mənfəət</th><th class="right">${fmtMoney(p.netProfit || 0)}</th></tr>
+                    <tr><td>Gəlir</td><td class="right">${fmtMoney(
+                      p.revenue || 0
+                    )}</td></tr>
+                    <tr><td>Satılan malın maya dəyəri (COGS)</td><td class="right">${fmtMoney(
+                      p.cogs || 0
+                    )}</td></tr>
+                    <tr><th>Brüt mənfəət</th><th class="right">${fmtMoney(
+                      p.grossProfit || 0
+                    )}</th></tr>
+                    <tr><td>Digər xərclər</td><td class="right">${fmtMoney(
+                      p.expenses || 0
+                    )}</td></tr>
+                    <tr><th>Xalis mənfəət</th><th class="right">${fmtMoney(
+                      p.netProfit || 0
+                    )}</th></tr>
                   </tbody>
                 </table>
               </div>
@@ -1447,8 +1809,10 @@ function renderFinance() {
       }
 
       function renderMovement() {
-        const rows = (APP.movements || []).map(m => {
-          return `<tr>
+        const rows =
+          (APP.movements || [])
+            .map((m) => {
+              return `<tr>
             <td>${m.code}</td>
             <td>${m.name}</td>
             <td class="right">${fmtN(m.inQty, 3)}</td>
@@ -1456,8 +1820,10 @@ function renderFinance() {
             <td class="right">${fmtN(m.outQty, 3)}</td>
             <td class="right">${fmtMoney(m.outSum)}</td>
           </tr>`;
-        }).join("") || '<tr><td colspan="6" class="tiny">Heç bir məlumat yoxdur</td></tr>';
-        
+            })
+            .join("") ||
+          '<tr><td colspan="6" class="tiny">Heç bir məlumat yoxdur</td></tr>';
+
         $("#mvBox").innerHTML = `
           <table>
             <thead>
@@ -1475,19 +1841,21 @@ function renderFinance() {
       }
 
       // ====== PRODUCTS ======
-     function renderProducts() {
+      function renderProducts() {
         let totalQuantity = 0;
         let totalValue = 0;
-        
-        const list = APP.products.map(x => {
-          const unitPrice = x.unitPrice || x.salePrice || 0;
-          const quantity = x.initialQuantity || x.quantity || 0;
-          const total = unitPrice * quantity;
-          
-          totalQuantity += quantity;
-          totalValue += total;
-          
-          return `
+
+        const list =
+          APP.products
+            .map((x) => {
+              const unitPrice = x.unitPrice || x.salePrice || 0;
+              const quantity = x.initialQuantity || x.quantity || 0;
+              const total = unitPrice * quantity;
+
+              totalQuantity += quantity;
+              totalValue += total;
+
+              return `
           <tr>
             <td>${x.code || ""}</td>
             <td>${x.name || ""}</td>
@@ -1496,13 +1864,19 @@ function renderFinance() {
             <td class="right">${fmtMoney(unitPrice)}</td>
             <td class="right">${fmtN(quantity, 0)}</td>
             <td class="right">${fmtMoney(total)}</td>
-            <td>${x.isActive === false ? '<span class="badge warn">arxiv</span>' : '<span class="badge ok">aktiv</span>'}</td>
+            <td>${
+              x.isActive === false
+                ? '<span class="badge warn">arxiv</span>'
+                : '<span class="badge ok">aktiv</span>'
+            }</td>
           </tr>`;
-        }).join("") || '<tr><td colspan="8" class="tiny">Məhsul yoxdur</td></tr>';
+            })
+            .join("") ||
+          '<tr><td colspan="8" class="tiny">Məhsul yoxdur</td></tr>';
 
         const productOptions = APP.products
-          .filter(x => x.isActive !== false)
-          .map(x => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
+          .filter((x) => x.isActive !== false)
+          .map((x) => `<option value="${x.id}">${x.code} — ${x.name}</option>`)
           .join("");
 
         $("#view").innerHTML = `
@@ -1542,8 +1916,13 @@ function renderFinance() {
                   <th>Təsvir</th>
                   <th>Kateqoriya</th>
                   <th class="right">Satış qiyməti</th>
-                  <th class="right">Miqdar <span class="badge ok">${fmtN(totalQuantity, 0)}</span></th>
-                  <th class="right">Total <span class="badge ok">${fmtMoney(totalValue)}</span></th>
+                  <th class="right">Miqdar <span class="badge ok">${fmtN(
+                    totalQuantity,
+                    0
+                  )}</span></th>
+                  <th class="right">Total <span class="badge ok">${fmtMoney(
+                    totalValue
+                  )}</span></th>
                   <th>Status</th>
                 </tr></thead>
                 <tbody>${list}</tbody>
@@ -1555,23 +1934,25 @@ function renderFinance() {
       async function updateProductQuantity() {
         const productId = $("#pUpdateSelect").value;
         const addQty = Number($("#pUpdateQty").value);
-        
+
         if (!productId) {
           alert("Məhsul seçin");
           return;
         }
-        
+
         if (addQty <= 0) {
           alert("Əlavə ediləcək miqdar 0-dan böyük olmalıdır");
           return;
         }
-        
+
         try {
-          const product = APP.products.find(p => p.id === productId);
+          const product = APP.products.find((p) => p.id === productId);
           const currentQty = product.initialQuantity || product.quantity || 0;
           const newQty = currentQty + addQty;
-          
-          await apiPUT(`/api/products/${productId}/quantity`, { quantity: newQty });
+
+          await apiPUT(`/api/products/${productId}/quantity`, {
+            quantity: newQty,
+          });
           await fetchProducts();
           await fetchProductionStock();
           $("#pUpdateQty").value = "0";
@@ -1588,23 +1969,26 @@ function renderFinance() {
         const price = Number($("#pPrice").value || 0);
         const description = $("#pDesc").value.trim();
         const initialQuantity = Number($("#pInitQty").value || 0);
-        
-        if (!code || !name) { alert("Kod və adı daxil edin"); return; }
-        
+
+        if (!code || !name) {
+          alert("Kod və adı daxil edin");
+          return;
+        }
+
         try {
-          await apiPOST("/api/products", { 
-            code, 
-            name, 
+          await apiPOST("/api/products", {
+            code,
+            name,
             category,
-            salePrice: price, 
+            salePrice: price,
             description,
             initialQuantity,
-            isActive: true 
+            isActive: true,
           });
           await fetchProducts();
           await fetchProductionStock();
-          $("#pCode").value = ""; 
-          $("#pName").value = ""; 
+          $("#pCode").value = "";
+          $("#pName").value = "";
           $("#pCat").value = "";
           $("#pPrice").value = "";
           $("#pDesc").value = "";
@@ -1613,29 +1997,28 @@ function renderFinance() {
       }
 
       // ====== STORE TRANSFER ======
-    function renderStoreTransfer() {
-  console.log("renderStoreTransfer çağırıldı");
-  console.log("APP.productionStock:", APP.productionStock);
-  
- 
-  let availableStock = APP.productionStock || [];
-  
-  
-  if (availableStock.length === 0 && APP.products.length > 0) {
-    availableStock = APP.products
-      .filter(p => p.isActive !== false)
-      .map(p => ({
-        productId: p.id,
-        productCode: p.code,
-        productName: p.name,
-        quantity: p.initialQuantity || p.quantity || 0
-      }));
-  }
-  
-  if (!availableStock || availableStock.length === 0) {
-    const productOptions = '<option value="">Hazırda anbar boşdur</option>';
-    
-    $("#view").innerHTML = `
+      function renderStoreTransfer() {
+        console.log("renderStoreTransfer çağırıldı");
+        console.log("APP.productionStock:", APP.productionStock);
+
+        let availableStock = APP.productionStock || [];
+
+        if (availableStock.length === 0 && APP.products.length > 0) {
+          availableStock = APP.products
+            .filter((p) => p.isActive !== false)
+            .map((p) => ({
+              productId: p.id,
+              productCode: p.code,
+              productName: p.name,
+              quantity: p.initialQuantity || p.quantity || 0,
+            }));
+        }
+
+        if (!availableStock || availableStock.length === 0) {
+          const productOptions =
+            '<option value="">Hazırda anbar boşdur</option>';
+
+          $("#view").innerHTML = `
       <div class="grid cols-2">
         <div class="card">
           <div class="section-title">Mağazaya köçürmə</div>
@@ -1662,38 +2045,48 @@ function renderFinance() {
           </table>
         </div>
       </div>`;
-    return;
-  }
-  
-  const productOptions = availableStock
-    .map(s => {
-      const product = APP.products.find(p => p.id === s.productId) || {};
-      const salePrice = product.unitPrice || product.salePrice || 0;
-      return `<option value="${s.productId}" data-saleprice="${salePrice}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd - Satış: ${fmtMoney(salePrice)})</option>`;
-    })
-    .join("");
+          return;
+        }
 
-  
-  function filterTransfersByDate() {
-    const fromDate = $("#trFilterFrom").value;
-    const toDate = $("#trFilterTo").value;
-    
-    let filtered = APP.storeTransfers.slice();
-    
-    if (fromDate) {
-      filtered = filtered.filter(t => t.date >= fromDate);
-    }
-    if (toDate) {
-      filtered = filtered.filter(t => t.date <= toDate);
-    }
-    
-    const items = filtered.sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-      .map(t => {
-        const product = APP.products.find(p => p.id === t.productId) || {};
-        const costPerUnit = product.unitPrice || product.salePrice || t.costPerUnit || 0;
-        const totalCost = costPerUnit * (t.quantity || 0);
-        
-        return `<tr>
+        const productOptions = availableStock
+          .map((s) => {
+            const product =
+              APP.products.find((p) => p.id === s.productId) || {};
+            const salePrice = product.unitPrice || product.salePrice || 0;
+            return `<option value="${
+              s.productId
+            }" data-saleprice="${salePrice}">${s.productCode} — ${
+              s.productName
+            } (${fmtN(s.quantity, 0)} ədəd - Satış: ${fmtMoney(
+              salePrice
+            )})</option>`;
+          })
+          .join("");
+
+        function filterTransfersByDate() {
+          const fromDate = $("#trFilterFrom").value;
+          const toDate = $("#trFilterTo").value;
+
+          let filtered = APP.storeTransfers.slice();
+
+          if (fromDate) {
+            filtered = filtered.filter((t) => t.date >= fromDate);
+          }
+          if (toDate) {
+            filtered = filtered.filter((t) => t.date <= toDate);
+          }
+
+          const items =
+            filtered
+              .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+              .map((t) => {
+                const product =
+                  APP.products.find((p) => p.id === t.productId) || {};
+                const costPerUnit =
+                  product.unitPrice || product.salePrice || t.costPerUnit || 0;
+                const totalCost = costPerUnit * (t.quantity || 0);
+
+                return `<tr>
           <td>${t.date}</td>
           <td>${t.productCode || ""}</td>
           <td>${t.productName || ""}</td>
@@ -1702,18 +2095,25 @@ function renderFinance() {
           <td class="right">${fmtMoney(totalCost)}</td>
           <td class="tiny">${t.note || ""}</td>
         </tr>`;
-      }).join("") || '<tr><td colspan="7" class="tiny">Bu tarix aralığında transfer yoxdur</td></tr>';
-    
-    $("#transferTableBody").innerHTML = items;
-  }
+              })
+              .join("") ||
+            '<tr><td colspan="7" class="tiny">Bu tarix aralığında transfer yoxdur</td></tr>';
 
-  const items = APP.storeTransfers.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-    .map(t => {
-      const product = APP.products.find(p => p.id === t.productId) || {};
-      const costPerUnit = product.unitPrice || product.salePrice || t.costPerUnit || 0;
-      const totalCost = costPerUnit * (t.quantity || 0);
-      
-      return `<tr>
+          $("#transferTableBody").innerHTML = items;
+        }
+
+        const items =
+          APP.storeTransfers
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map((t) => {
+              const product =
+                APP.products.find((p) => p.id === t.productId) || {};
+              const costPerUnit =
+                product.unitPrice || product.salePrice || t.costPerUnit || 0;
+              const totalCost = costPerUnit * (t.quantity || 0);
+
+              return `<tr>
         <td>${t.date}</td>
         <td>${t.productCode || ""}</td>
         <td>${t.productName || ""}</td>
@@ -1722,9 +2122,11 @@ function renderFinance() {
         <td class="right">${fmtMoney(totalCost)}</td>
         <td class="tiny">${t.note || ""}</td>
       </tr>`;
-    }).join("") || '<tr><td colspan="7" class="tiny">Transfer yoxdur</td></tr>';
+            })
+            .join("") ||
+          '<tr><td colspan="7" class="tiny">Transfer yoxdur</td></tr>';
 
-  $("#view").innerHTML = `
+        $("#view").innerHTML = `
     <div class="grid cols-2">
       <div class="card">
         <div class="section-title">Mağazaya köçürmə</div>
@@ -1757,46 +2159,55 @@ function renderFinance() {
         </table>
       </div>
     </div>`;
-  
-  function updateTransferTotal() {
-    const qtyInput = document.getElementById("trQty");
-    const costInput = document.getElementById("trCost");
-    const totalInput = document.getElementById("trTotal");
-    
-    if (!qtyInput || !costInput || !totalInput) return;
-    
-    const costPerUnit = Number(costInput.value || 0);
-    const quantity = Number(qtyInput.value || 0);
-    const total = costPerUnit * quantity;
-    
-    totalInput.value = fmtMoney(total);
-  }
-  
-  
-  window.filterTransfersByDate = filterTransfersByDate;
-  window.clearTransferFilter = function() {
-    $("#trFilterFrom").value = "";
-    $("#trFilterTo").value = "";
-    filterTransfersByDate();
-  };
-  
-  document.getElementById("trProduct").addEventListener("change", function() {
-    const selectedOption = this.options[this.selectedIndex];
-    const salePrice = Number(selectedOption.getAttribute("data-saleprice") || 0);
-    document.getElementById("trCost").value = salePrice.toFixed(2);
-    updateTransferTotal();
-  });
-  
-  document.getElementById("trQty").addEventListener("input", updateTransferTotal);
-  document.getElementById("trCost").addEventListener("input", updateTransferTotal);
-  
-  const firstOption = document.getElementById("trProduct").options[0];
-  if (firstOption) {
-    const salePrice = Number(firstOption.getAttribute("data-saleprice") || 0);
-    document.getElementById("trCost").value = salePrice.toFixed(2);
-  }
-  updateTransferTotal();
-}
+
+        function updateTransferTotal() {
+          const qtyInput = document.getElementById("trQty");
+          const costInput = document.getElementById("trCost");
+          const totalInput = document.getElementById("trTotal");
+
+          if (!qtyInput || !costInput || !totalInput) return;
+
+          const costPerUnit = Number(costInput.value || 0);
+          const quantity = Number(qtyInput.value || 0);
+          const total = costPerUnit * quantity;
+
+          totalInput.value = fmtMoney(total);
+        }
+
+        window.filterTransfersByDate = filterTransfersByDate;
+        window.clearTransferFilter = function () {
+          $("#trFilterFrom").value = "";
+          $("#trFilterTo").value = "";
+          filterTransfersByDate();
+        };
+
+        document
+          .getElementById("trProduct")
+          .addEventListener("change", function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const salePrice = Number(
+              selectedOption.getAttribute("data-saleprice") || 0
+            );
+            document.getElementById("trCost").value = salePrice.toFixed(2);
+            updateTransferTotal();
+          });
+
+        document
+          .getElementById("trQty")
+          .addEventListener("input", updateTransferTotal);
+        document
+          .getElementById("trCost")
+          .addEventListener("input", updateTransferTotal);
+
+        const firstOption = document.getElementById("trProduct").options[0];
+        if (firstOption) {
+          const salePrice = Number(
+            firstOption.getAttribute("data-saleprice") || 0
+          );
+          document.getElementById("trCost").value = salePrice.toFixed(2);
+        }
+        updateTransferTotal();
+      }
 
       async function addStoreTransfer() {
         const productId = $("#trProduct").value;
@@ -1814,19 +2225,19 @@ function renderFinance() {
             date,
             productId,
             quantity,
-            note
+            note,
           });
-          
+
           alert("✅ Transfer uğurla həyata keçirildi!");
-          
+
           await Promise.all([
             fetchStoreTransfers(),
             fetchProductionStock(),
-            fetchStoreStock()
+            fetchStoreStock(),
           ]);
-          
+
           renderStoreTransfer();
-          
+
           $("#trQty").value = "";
           $("#trNote").value = "";
         } catch (e) {
@@ -1835,29 +2246,35 @@ function renderFinance() {
       }
 
       // ====== STORE STOCK ======
-  function renderStoreStock() {
-  let totalQuantity = 0;
-  let totalValue = 0;
-  
-  const rows = (APP.storeStock || []).map(s => {
-    const product = APP.products.find(p => p.id === s.productId) || {};
-    const costPerUnit = product.unitPrice || product.salePrice || s.avgCost || 0;
-    const quantity = s.quantity || 0;
-    const itemValue = costPerUnit * quantity;
-    
-    totalQuantity += quantity;
-    totalValue += itemValue;
-    
-    return `<tr>
+      function renderStoreStock() {
+        let totalQuantity = 0;
+        let totalValue = 0;
+
+        const rows =
+          (APP.storeStock || [])
+            .map((s) => {
+              const product =
+                APP.products.find((p) => p.id === s.productId) || {};
+              const costPerUnit =
+                product.unitPrice || product.salePrice || s.avgCost || 0;
+              const quantity = s.quantity || 0;
+              const itemValue = costPerUnit * quantity;
+
+              totalQuantity += quantity;
+              totalValue += itemValue;
+
+              return `<tr>
       <td>${s.productCode || ""}</td>
       <td>${s.productName || ""}</td>
       <td class="right">${fmtN(quantity, 0)}</td>
       <td class="right">${fmtMoney(costPerUnit)}</td>
       <td class="right">${fmtMoney(itemValue)}</td>
     </tr>`;
-  }).join("") || '<tr><td colspan="5" class="tiny">Mağaza anbarında məhsul yoxdur</td></tr>';
+            })
+            .join("") ||
+          '<tr><td colspan="5" class="tiny">Mağaza anbarında məhsul yoxdur</td></tr>';
 
-  $("#view").innerHTML = `
+        $("#view").innerHTML = `
     <div class="card">
       <div class="section-title">Mağaza anbarı</div>
       <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
@@ -1867,40 +2284,53 @@ function renderFinance() {
         <thead><tr>
           <th>Kod</th>
           <th>Məhsul</th>
-          <th class="right">Miqdar (ədəd) <span class="badge ok">${fmtN(totalQuantity, 0)}</span></th>
+          <th class="right">Miqdar (ədəd) <span class="badge ok">${fmtN(
+            totalQuantity,
+            0
+          )}</span></th>
           <th class="right">1 ədəd maya (₼)</th>
-          <th class="right">Dəyər (₼) <span class="badge ok">${fmtMoney(totalValue)}</span></th>
+          <th class="right">Dəyər (₼) <span class="badge ok">${fmtMoney(
+            totalValue
+          )}</span></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
-}
+      }
 
-     
       // ====== STORE SALES ======
-function renderStoreSales() {
-  const productOptions = (APP.storeStock || [])
-    .filter(s => s.quantity > 0)
-    .map(s => `<option value="${s.productId}">${s.productCode} — ${s.productName} (${fmtN(s.quantity, 0)} ədəd - ${fmtMoney(s.unitPrice)})</option>`)
-    .join("");
+      function renderStoreSales() {
+        const productOptions = (APP.storeStock || [])
+          .filter((s) => s.quantity > 0)
+          .map(
+            (s) =>
+              `<option value="${s.productId}">${s.productCode} — ${
+                s.productName
+              } (${fmtN(s.quantity, 0)} ədəd - ${fmtMoney(
+                s.unitPrice
+              )})</option>`
+          )
+          .join("");
 
-  const items = APP.storeSales.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||""))
-    .map(sale => {
-      const prod = APP.products.find(p => p.id === sale.productId) || {};
-      
-     
-      const salePrice = sale.unitPrice || 0;
-      const quantity = sale.quantity || 0;
-      
-      const revenue = salePrice * quantity;
-      
-      const costPerUnit = prod.unitPrice || prod.salePrice || 0;
-      const expense = costPerUnit * quantity;
-      
-      
-      const profit = revenue - expense;
-      
-      return `<tr>
+        const items =
+          APP.storeSales
+            .slice()
+            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+            .map((sale) => {
+              const prod =
+                APP.products.find((p) => p.id === sale.productId) || {};
+
+              const salePrice = sale.unitPrice || 0;
+              const quantity = sale.quantity || 0;
+
+              const revenue = salePrice * quantity;
+
+              const costPerUnit = prod.unitPrice || prod.salePrice || 0;
+              const expense = costPerUnit * quantity;
+
+              const profit = revenue - expense;
+
+              return `<tr>
         <td>${sale.date}</td>
         <td>${prod.code || ""}</td>
         <td>${prod.name || ""}</td>
@@ -1912,9 +2342,11 @@ function renderStoreSales() {
         <td>${sale.customer || ""}</td>
         <td class="tiny">${sale.note || ""}</td>
       </tr>`;
-    }).join("") || '<tr><td colspan="10" class="tiny">Satış yoxdur</td></tr>';
+            })
+            .join("") ||
+          '<tr><td colspan="10" class="tiny">Satış yoxdur</td></tr>';
 
-  $("#view").innerHTML = `
+        $("#view").innerHTML = `
     <div class="grid cols-2">
       <div class="card">
         <div class="section-title">Satış</div>
@@ -1949,20 +2381,23 @@ function renderStoreSales() {
         </table>
       </div>
     </div>`;
-  
-  $("#saleProduct").addEventListener("change", function() {
-    const prodId = this.value;
-    const prod = APP.products.find(p => p.id === prodId);
-    if (prod) {
-      $("#salePrice").value = prod.unitPrice || prod.salePrice || 0;
-    }
-  });
-  
-  if (APP.products.length && $("#saleProduct").value) {
-    const prod = APP.products.find(p => p.id === $("#saleProduct").value);
-    if (prod) $("#salePrice").value = prod.unitPrice || prod.salePrice || 0;
-  }
-}
+
+        $("#saleProduct").addEventListener("change", function () {
+          const prodId = this.value;
+          const prod = APP.products.find((p) => p.id === prodId);
+          if (prod) {
+            $("#salePrice").value = prod.unitPrice || prod.salePrice || 0;
+          }
+        });
+
+        if (APP.products.length && $("#saleProduct").value) {
+          const prod = APP.products.find(
+            (p) => p.id === $("#saleProduct").value
+          );
+          if (prod)
+            $("#salePrice").value = prod.unitPrice || prod.salePrice || 0;
+        }
+      }
       async function addStoreSale() {
         const productId = $("#saleProduct").value;
         const quantity = Number($("#saleQty").value);
@@ -1981,9 +2416,9 @@ function renderStoreSales() {
             date,
             productId,
             quantity,
-            unitPrice:salePrice,
+            unitPrice: salePrice,
             customer,
-            note
+            note,
           });
           await fetchStoreSales();
           await fetchStoreStock();
@@ -2008,15 +2443,23 @@ function renderStoreSales() {
         else if (currentTab === "reports") renderReports();
       }
 
-
       function exportToExcel(type) {
         let data = [];
         let filename = "";
-        
+
         if (type === "products") {
           filename = "Mehsullar_" + today() + ".csv";
-          data.push(["Kod", "Ad", "Təsvir", "Kateqoriya", "Satış qiyməti", "Miqdar", "Total", "Status"]);
-          APP.products.forEach(x => {
+          data.push([
+            "Kod",
+            "Ad",
+            "Təsvir",
+            "Kateqoriya",
+            "Satış qiyməti",
+            "Miqdar",
+            "Total",
+            "Status",
+          ]);
+          APP.products.forEach((x) => {
             const unitPrice = x.unitPrice || x.salePrice || 0;
             const quantity = x.initialQuantity || x.quantity || 0;
             const total = unitPrice * quantity;
@@ -2028,15 +2471,17 @@ function renderStoreSales() {
               unitPrice.toFixed(2),
               quantity,
               total.toFixed(2),
-              x.isActive === false ? "arxiv" : "aktiv"
+              x.isActive === false ? "arxiv" : "aktiv",
             ]);
           });
         } else if (type === "storestock") {
           filename = "Magaza_Anbari_" + today() + ".csv";
           data.push(["Kod", "Məhsul", "Miqdar", "Maya/ədəd", "Dəyər"]);
-          (APP.storeStock || []).forEach(s => {
-            const product = APP.products.find(p => p.id === s.productId) || {};
-            const costPerUnit = product.unitPrice || product.salePrice || s.avgCost || 0;
+          (APP.storeStock || []).forEach((s) => {
+            const product =
+              APP.products.find((p) => p.id === s.productId) || {};
+            const costPerUnit =
+              product.unitPrice || product.salePrice || s.avgCost || 0;
             const quantity = s.quantity || 0;
             const value = costPerUnit * quantity;
             data.push([
@@ -2044,26 +2489,35 @@ function renderStoreSales() {
               s.productName || "",
               quantity,
               costPerUnit.toFixed(2),
-              value.toFixed(2)
+              value.toFixed(2),
             ]);
           });
         } else if (type === "materials") {
           filename = "Materiallar_" + today() + ".csv";
           data.push(["Kod", "Ad", "Vahid", "Minimum qalıq", "Status"]);
-          APP.materials.forEach(x => {
+          APP.materials.forEach((x) => {
             data.push([
               x.code || "",
               x.name || "",
               "kg",
               (x.minLevel || 0).toFixed(3),
-              x.isActive === false ? "arxiv" : "aktiv"
+              x.isActive === false ? "arxiv" : "aktiv",
             ]);
           });
         } else if (type === "receipts") {
           filename = "Qebullar_" + today() + ".csv";
-          data.push(["Tarix", "Kod", "Material", "Miqdar (kg)", "Qiymət/kg", "Məbləğ", "Təchizatçı", "Şərh"]);
-          APP.receipts.forEach(r => {
-            const mat = APP.materials.find(m => m.id === r.materialId) || {};
+          data.push([
+            "Tarix",
+            "Kod",
+            "Material",
+            "Miqdar (kg)",
+            "Qiymət/kg",
+            "Məbləğ",
+            "Təchizatçı",
+            "Şərh",
+          ]);
+          APP.receipts.forEach((r) => {
+            const mat = APP.materials.find((m) => m.id === r.materialId) || {};
             data.push([
               r.date,
               mat.code || "",
@@ -2072,14 +2526,23 @@ function renderStoreSales() {
               (r.pricePerKg || 0).toFixed(2),
               (r.totalCost || 0).toFixed(2),
               r.supplier || "",
-              r.note || ""
+              r.note || "",
             ]);
           });
         } else if (type === "issues") {
           filename = "Silmeler_" + today() + ".csv";
-          data.push(["Tarix", "Kod", "Material", "Miqdar (kg)", "Orta qiymət", "Məbləğ", "İş", "Şərh"]);
-          APP.issues.forEach(i => {
-            const mat = APP.materials.find(m => m.id === i.materialId) || {};
+          data.push([
+            "Tarix",
+            "Kod",
+            "Material",
+            "Miqdar (kg)",
+            "Orta qiymət",
+            "Məbləğ",
+            "İş",
+            "Şərh",
+          ]);
+          APP.issues.forEach((i) => {
+            const mat = APP.materials.find((m) => m.id === i.materialId) || {};
             data.push([
               i.date,
               mat.code || "",
@@ -2088,28 +2551,45 @@ function renderStoreSales() {
               (i.avgCostUsed || 0).toFixed(2),
               (i.totalCostUsed || 0).toFixed(2),
               i.jobRef || "",
-              i.note || ""
+              i.note || "",
             ]);
           });
         } else if (type === "stock") {
           filename = "Anbar_" + today() + ".csv";
-          data.push(["Kod", "Material", "Miqdar (kg)", "Orta qiymət", "Dəyər", "Status"]);
-          (APP.stock || []).forEach(s => {
+          data.push([
+            "Kod",
+            "Material",
+            "Miqdar (kg)",
+            "Orta qiymət",
+            "Dəyər",
+            "Status",
+          ]);
+          (APP.stock || []).forEach((s) => {
             data.push([
               s.code || "",
               s.name || "",
               (s.onHandKg || 0).toFixed(3),
               (s.avgCostPerKg || 0).toFixed(2),
               (s.inventoryValue || 0).toFixed(2),
-              s.status === "low" ? "LOW" : "OK"
+              s.status === "low" ? "LOW" : "OK",
             ]);
           });
         } else if (type === "storetransfer") {
           filename = "Magaza_Kocurme_" + today() + ".csv";
-          data.push(["Tarix", "Kod", "Məhsul", "Miqdar", "Maya/ədəd", "Cəm", "Qeyd"]);
-          APP.storeTransfers.forEach(t => {
-            const product = APP.products.find(p => p.id === t.productId) || {};
-            const costPerUnit = product.unitPrice || product.salePrice || t.costPerUnit || 0;
+          data.push([
+            "Tarix",
+            "Kod",
+            "Məhsul",
+            "Miqdar",
+            "Maya/ədəd",
+            "Cəm",
+            "Qeyd",
+          ]);
+          APP.storeTransfers.forEach((t) => {
+            const product =
+              APP.products.find((p) => p.id === t.productId) || {};
+            const costPerUnit =
+              product.unitPrice || product.salePrice || t.costPerUnit || 0;
             data.push([
               t.date,
               t.productCode || "",
@@ -2117,14 +2597,26 @@ function renderStoreSales() {
               t.quantity || 0,
               costPerUnit.toFixed(2),
               (costPerUnit * (t.quantity || 0)).toFixed(2),
-              t.note || ""
+              t.note || "",
             ]);
           });
         } else if (type === "storesales") {
           filename = "Satislar_" + today() + ".csv";
-          data.push(["Tarix", "Kod", "Məhsul", "Miqdar", "Qiymət", "Gəlir", "Xərc", "Mənfəət", "Müştəri", "Qeyd"]);
-          APP.storeSales.forEach(sale => {
-            const prod = APP.products.find(p => p.id === sale.productId) || {};
+          data.push([
+            "Tarix",
+            "Kod",
+            "Məhsul",
+            "Miqdar",
+            "Qiymət",
+            "Gəlir",
+            "Xərc",
+            "Mənfəət",
+            "Müştəri",
+            "Qeyd",
+          ]);
+          APP.storeSales.forEach((sale) => {
+            const prod =
+              APP.products.find((p) => p.id === sale.productId) || {};
             const salePrice = sale.unitPrice || 0;
             const quantity = sale.quantity || 0;
             const revenue = salePrice * quantity;
@@ -2141,27 +2633,44 @@ function renderStoreSales() {
               expense.toFixed(2),
               profit.toFixed(2),
               sale.customer || "",
-              sale.note || ""
+              sale.note || "",
             ]);
           });
         } else if (type === "finance") {
           filename = "Maliyye_" + today() + ".csv";
-          data.push(["Tarix", "Tip", "Kateqoriya", "Kontragent", "Məbləğ", "Qeyd"]);
-          (APP.finances || []).forEach(f => {
+          data.push([
+            "Tarix",
+            "Tip",
+            "Kateqoriya",
+            "Kontragent",
+            "Məbləğ",
+            "Qeyd",
+          ]);
+          (APP.finances || []).forEach((f) => {
             data.push([
               f.date,
               f.type === "income" ? "Gəlir" : "Xərc",
               f.category || "",
               f.counterparty || "",
               (f.amountAzn || 0).toFixed(2),
-              f.note || ""
+              f.note || "",
             ]);
           });
         } else if (type === "ar") {
           filename = "AR_" + today() + ".csv";
-          data.push(["Tip", "Tarix", "Kontragent", "Məbləğ", "Qalıq", "Status"]);
-          APP.ar.forEach(e => {
-            const paid = (e.payments || []).reduce((a,b) => a + Number(b.amountAzn || 0), 0);
+          data.push([
+            "Tip",
+            "Tarix",
+            "Kontragent",
+            "Məbləğ",
+            "Qalıq",
+            "Status",
+          ]);
+          APP.ar.forEach((e) => {
+            const paid = (e.payments || []).reduce(
+              (a, b) => a + Number(b.amountAzn || 0),
+              0
+            );
             const remaining = (e.amountAzn || 0) - paid;
             data.push([
               "AR (Debitor)",
@@ -2169,14 +2678,24 @@ function renderStoreSales() {
               e.counterparty || "",
               (e.amountAzn || 0).toFixed(2),
               remaining.toFixed(2),
-              e.status || ""
+              e.status || "",
             ]);
           });
         } else if (type === "ap") {
           filename = "AP_" + today() + ".csv";
-          data.push(["Tip", "Tarix", "Kontragent", "Məbləğ", "Qalıq", "Status"]);
-          APP.ap.forEach(e => {
-            const paid = (e.payments || []).reduce((a,b) => a + Number(b.amountAzn || 0), 0);
+          data.push([
+            "Tip",
+            "Tarix",
+            "Kontragent",
+            "Məbləğ",
+            "Qalıq",
+            "Status",
+          ]);
+          APP.ap.forEach((e) => {
+            const paid = (e.payments || []).reduce(
+              (a, b) => a + Number(b.amountAzn || 0),
+              0
+            );
             const remaining = (e.amountAzn || 0) - paid;
             data.push([
               "AP (Kreditor)",
@@ -2184,17 +2703,23 @@ function renderStoreSales() {
               e.counterparty || "",
               (e.amountAzn || 0).toFixed(2),
               remaining.toFixed(2),
-              e.status || ""
+              e.status || "",
             ]);
           });
         }
-        
+
         // CSV yaradırıq - SEMİCOLON (;) ilə
-        const csv = data.map(row => row.map(cell => {
-          const str = String(cell).replace(/"/g, '""');
-          return `"${str}"`;
-        }).join(";")).join("\n");
-        
+        const csv = data
+          .map((row) =>
+            row
+              .map((cell) => {
+                const str = String(cell).replace(/"/g, '""');
+                return `"${str}"`;
+              })
+              .join(";")
+          )
+          .join("\n");
+
         // UTF-8 BOM əlavə edirik (Excel üçün)
         const BOM = "\uFEFF";
         const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
@@ -2219,7 +2744,6 @@ function renderStoreSales() {
         renderView();
         await refreshAll();
       });
-
     </script>
   </body>
 </html>
