@@ -438,15 +438,43 @@
         list-style: none;
         max-height: 260px;
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
       }
 
       .payment-item {
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #e5e7eb;
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.95rem;
+        background: linear-gradient(135deg, #f8fafc, #eef2ff);
+        border: 1px solid #e0e7ff;
+        border-radius: 14px;
+        padding: 0.9rem 1rem;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: auto auto;
+        gap: 0.35rem 0.75rem;
+        font-size: 0.93rem;
         color: #1f2937;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+      }
+
+      .payment-item span:first-of-type {
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .payment-item span:last-of-type {
+        justify-self: end;
+        font-weight: 700;
+        color: #0ea5e9;
+      }
+
+      .payment-item p {
+        grid-column: 1 / -1;
+        margin: 0;
+        padding-top: 0.35rem;
+        font-size: 0.85rem;
+        color: #475569;
+        border-top: 1px dashed #cbd5f5;
       }
 
       .payment-empty {
@@ -505,6 +533,16 @@
 
       .scrollable::-webkit-scrollbar-track {
         background: #0f172a;
+        border-radius: 8px;
+      }
+
+      .payment-modal .scrollable::-webkit-scrollbar-track  {
+        background: #a6dcf7;
+        border-radius: 8px;
+      }
+
+      .payment-modal .scrollable::-webkit-scrollbar-thumb  {
+        background: #6e90a2;
         border-radius: 8px;
       }
 
@@ -1513,8 +1551,9 @@
       }
 
       // Payments
-      async function showPayments(paymentId) {
-        // const paymentId = event.parentElement.children[0]
+      async function showPayments(arId) {
+        const paymentList = apiGET(`/api/payments/creditor/${arId}`);
+
         const overlay = document.createElement("div");
         overlay.className = "payment-overlay open";
         overlay.innerHTML = `
@@ -1551,36 +1590,30 @@
         });
 
         const content = overlay.querySelector("#paymentContent");
-        const endpoint = `https://api.example.com/payments?personId=${encodeURIComponent(
-          paymentId
-        )}`;
-
-        try {
-          const response = await fetch(endpoint);
-          if (!response.ok) throw new Error("Network response was not ok");
-          const data = await response.json();
-          const payments = Array.isArray(data?.payments) ? data.payments : [];
-
-          if (!payments.length) {
-            content.innerHTML = `<div class="payment-empty">Ödəniş tarixçəsi boşdur...</div>`;
-            return;
-          }
-
-          const listItems = payments
-            .map(
-              (payment) => `
-            <li class="payment-item">
-              <span>${payment.date || "Tarix yoxdur"}</span>
-              <span>${payment.amount ?? "--"}</span>
-            </li>`
-            )
-            .join("");
-
-          content.innerHTML = `<ul class="payment-list">${listItems}</ul>`;
-        } catch (error) {
-          console.error("Failed to load payments:", error);
+        if (!paymentList.length) {
           content.innerHTML = `<div class="payment-empty">Ödəniş tarixçəsi boşdur...</div>`;
+          return;
         }
+
+        const listItems = paymentList
+          .map(
+            (payment) => `
+            <li class="payment-item">
+              <span> Tarix: ${payment.date || "Tarix yoxdur"}</span>
+              <span> Ödənilib: ${payment.amountAzn ?? "--"} AZN </span>
+              <p>${payment.note ? payment.note : " Qeyd yoxdur... "}</p>
+            </li>`
+          )
+          .join("");
+
+        let paidTotal = 0;
+
+        paymentList.map((payment) => (paidTotal += payment.amountAzn));
+
+        content.innerHTML = `
+          <ul class="payment-list scrollable"> ${listItems} </ul>
+          <p style="color: #0284C7"> Cəmi: ${paidTotal} </p>
+        `;
         console.log("payments", event);
       }
 
