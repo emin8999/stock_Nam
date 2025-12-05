@@ -14,7 +14,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 public class PaymentDTO {
+    private String id;
     private String date;
     private BigDecimal amountAzn;
     private String note;
+    private String arId;
+    private String apId;
 }

@@ -27,4 +27,11 @@ public class Payment {
     
     @Column(length = 500)
     private String note;
+
+    @Column(name = "ar_id")
+    private String arId;
+
+    @Column(name = "ap_id")
+    private String apId; 
+
 }
