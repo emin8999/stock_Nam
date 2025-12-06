@@ -22,8 +22,8 @@ public class PaymentController {
 
         
     @GetMapping("/creditor/{arId}")
-    public ResponseEntity<List<PaymentDTO>> getPaymentsByCreditor(@PathVariable String arId) {
-        List<PaymentDTO> payments = paymentService.getPaymentsByCreditor(arId);
+    public ResponseEntity<List<PaymentDTO>> getPaymentsByCreditor(@PathVariable String apId) {
+        List<PaymentDTO> payments = paymentService.getPaymentsByCreditor(apId);
         return ResponseEntity.ok(payments);
     }
 }
