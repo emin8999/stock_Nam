@@ -10,7 +10,13 @@ import com.backend.entity.Payment;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, String> {
-   List<Payment> findAllByArId(String arId);
-   List<Payment> findAllByApId(String apId);
+   // List<Payment> findAllByArId(String arId);
+   // List<Payment> findAllByApId(String apId);
+
+     List<Payment> findByArIdOrderByDateDesc(String  arId);
+    
+    List<Payment> findByApIdOrderByDateDesc(String apId);
+    
+    List<Payment> findAllByOrderByDateDesc();
 
 }

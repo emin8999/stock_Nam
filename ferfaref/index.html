@@ -1551,14 +1551,17 @@
       }
 
       // Payments
-      async function showPayments(arId) {
-        const paymentList = apiGET(`/api/payments/creditor/${arId}`);
+      async function showPayments(type, id) {
+  try {
+    // type: 'ar' və ya 'ap'
+    const endpoint = type === 'ar' ? `/api/payments/debtor/${id}` : `/api/payments/creditor/${id}`;
+    const paymentList = await apiGET(endpoint);
 
-        const overlay = document.createElement("div");
-        overlay.className = "payment-overlay open";
-        overlay.innerHTML = `
+    const overlay = document.createElement("div");
+    overlay.className = "payment-overlay open";
+    overlay.innerHTML = `
       <div class="payment-modal" role="dialog" aria-modal="true">
-        <h2>Ödəmə Tarixi</h2>
+        <h2>Ödəniş Tarixçəsi</h2>
         <div id="paymentContent">
           <div class="payment-empty">Yüklənir...</div>
         </div>
@@ -1567,144 +1570,129 @@
         </div>
       </div>
     `;
-        document.body.appendChild(overlay);
+    document.body.appendChild(overlay);
 
-        const closeModal = () => {
-          overlay.classList.remove("open");
-          overlay.addEventListener("transitionend", () => overlay.remove(), {
-            once: true,
-          });
-        };
+    const closeModal = () => {
+      overlay.classList.remove("open");
+      overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
+    };
 
-        overlay.addEventListener("click", (evt) => {
-          if (evt.target === overlay) closeModal();
-        });
-        overlay
-          .querySelector(".close-btn")
-          .addEventListener("click", closeModal);
-        window.addEventListener("keydown", function escListener(evt) {
-          if (evt.key === "Escape") {
-            closeModal();
-            window.removeEventListener("keydown", escListener);
-          }
-        });
+    overlay.addEventListener("click", (evt) => {
+      if (evt.target === overlay) closeModal();
+    });
+    overlay.querySelector(".close-btn").addEventListener("click", closeModal);
 
-        const content = overlay.querySelector("#paymentContent");
-        if (!paymentList.length) {
-          content.innerHTML = `<div class="payment-empty">Ödəniş tarixçəsi boşdur...</div>`;
-          return;
-        }
+    const content = overlay.querySelector("#paymentContent");
+    
+    if (!paymentList || paymentList.length === 0) {
+      content.innerHTML = `<div class="payment-empty">Ödəniş tarixçəsi boşdur...</div>`;
+      return;
+    }
 
-        const listItems = paymentList
-          .map(
-            (payment) => `
-            <li class="payment-item">
-              <span> Tarix: ${payment.date || "Tarix yoxdur"}</span>
-              <span> Ödənilib: ${payment.amountAzn ?? "--"} AZN </span>
-              <p>${payment.note ? payment.note : " Qeyd yoxdur... "}</p>
-            </li>`
-          )
-          .join("");
+    const listItems = paymentList.map(payment => `
+      <li class="payment-item">
+        <span>Tarix: ${payment.date || "Tarix yoxdur"}</span>
+        <span>Ödənilib: ${fmtMoney(payment.amountAzn)}</span>
+        <p>${payment.note ? payment.note : "Qeyd yoxdur..."}</p>
+      </li>`
+    ).join("");
 
-        let paidTotal = 0;
+    const paidTotal = paymentList.reduce((sum, p) => sum + (p.amountAzn || 0), 0);
 
-        paymentList.map((payment) => (paidTotal += payment.amountAzn));
+    content.innerHTML = `
+      <ul class="payment-list scrollable">${listItems}</ul>
+      <p style="color: #0284C7; font-weight:700; margin-top:12px; text-align:right;">Cəmi ödəniş: ${fmtMoney(paidTotal)}</p>
+    `;
+  } catch (e) {
+    console.error("Ödəniş tarixçəsi xətası:", e);
+    alert("Ödəniş tarixçəsi yüklənərkən xəta baş verdi");
+  }
+}
 
-        content.innerHTML = `
-          <ul class="payment-list scrollable"> ${listItems} </ul>
-          <p style="color: #0284C7"> Cəmi: ${paidTotal} </p>
-        `;
-        console.log("payments", event);
-      }
+function renderARAP() {
+  const arRows =
+    (APP.ar || [])
+      .slice()
+      .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+      .map(
+        (e) => `<tr>
+          <td>${e.date}</td>
+          <td>${e.counterparty || ""}</td>
+          <td class="right">${fmtMoney(e.amountAzn || 0)}</td>
+          <td class="right">${fmtMoney(arRemaining(e))}</td>
+          <td>${e.status || ""}</td>
+          <td class="right"><button class="ghost" onclick="addARPayPrompt('${e.id}')">Ödəniş</button></td>
+          <td onclick="showPayments('ar', '${e.id}')" class="payment-btn" style="cursor:pointer;">
+            <i class="fa-solid fa-clock"></i>  
+          </td>
+        </tr>`
+      )
+      .join("") ||
+    '<tr><td colspan="7" class="tiny">Debitor yoxdur</td></tr>';
 
-      function renderARAP() {
-        const arRows =
-          (APP.ar || [])
-            .slice()
-            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
-            .map(
-              (e) => `<tr>
-            <td>${e.date}</td>
-            <td>${e.counterparty || ""}</td>
-            <td class="right">${fmtMoney(e.amountAzn || 0)}</td>
-            <td class="right">${fmtMoney(arRemaining(e))}</td>
-            <td>${e.status || ""}</td>
-            <td class="right"><button class="ghost" onclick="addARPayPrompt('${
-              e.id
-            }')">Ödəniş</button></td>
-            <td onclick="showPayments('${e.id}')" class="payment-btn">
-              <i class="fa-solid fa-clock"></i>  
-            </td>
-            </tr>`
-            )
-            .join("") ||
-          '<tr><td colspan="6" class="tiny">Debitor yoxdur</td></tr>';
+  const apRows =
+    (APP.ap || [])
+      .slice()
+      .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+      .map(
+        (e) => `<tr>
+          <td>${e.date}</td>
+          <td>${e.counterparty || ""}</td>
+          <td class="right">${fmtMoney(e.amountAzn || 0)}</td>
+          <td class="right">${fmtMoney(apRemaining(e))}</td>
+          <td>${e.status || ""}</td>
+          <td class="right"><button class="ghost" onclick="addAPPayPrompt('${e.id}')">Ödəniş</button></td>
+          <td onclick="showPayments('ap', '${e.id}')" class="payment-btn" style="cursor:pointer;">
+            <i class="fa-solid fa-clock"></i>  
+          </td>
+        </tr>`
+      )
+      .join("") ||
+    '<tr><td colspan="7" class="tiny">Borc yoxdur</td></tr>';
 
-        const apRows =
-          (APP.ap || [])
-            .slice()
-            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
-            .map(
-              (e) => `<tr>
-            <td>${e.date}</td>
-            <td>${e.counterparty || ""}</td>
-            <td class="right">${fmtMoney(e.amountAzn || 0)}</td>
-            <td class="right">${fmtMoney(apRemaining(e))}</td>
-            <td>${e.status || ""}</td>
-            <td class="right"><button class="ghost" onclick="addAPPayPrompt('${
-              e.id
-            }')">Ödəniş</button></td>
-            <td onclick="showPayments('${e.id}')" class="payment-btn">
-              <i class="fa-solid fa-clock"></i>  
-            </td>
-            </tr>`
-            )
-            .join("") ||
-          '<tr><td colspan="6" class="tiny">Borc yoxdur</td></tr>';
+  $("#view").innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="section-title">Borclular (AR)</div>
+        <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
+          <button onclick="exportToExcel('ar')">📥 Excel yüklə</button>
+        </div>
+        <div class="row wrap">
+          <div style="flex:2 1 220px;"><label>Kontragent</label><input id="arCp"></div>
+          <div style="flex:1 1 160px;"><label>Tarix</label><input id="arDate" type="date" value="${today()}"></div>
+          <div style="flex:1 1 150px;"><label>Məbləğ (₼)</label><input id="arAmt" type="number" step="0.01"></div>
+          <div style="flex:1 1 160px;"><label>Status</label><select id="arStatus"><option>open</option><option>partial</option><option>closed</option></select></div>
+        </div>
+        <label>Qeyd</label><textarea id="arNote"></textarea>
+        <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addAR()">Əlavə et</button></div>
+        <div class="divider"></div>
+        <table>
+          <thead><tr><th>Tarix</th><th>Kontragent</th><th class="right">Məbləğ</th><th class="right">Qalıq</th><th>Status</th><th class="right">Əməliyyat</th><th>Tarixçə</th></tr></thead>
+          <tbody>${arRows}</tbody>
+        </table>
+      </div>
 
-        $("#view").innerHTML = `
-          <div class="grid cols-2">
-            <div class="card">
-              <div class="section-title">Borclular (AR)</div>
-              <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
-                <button onclick="exportToExcel('ar')">📥 Excel yüklə</button>
-              </div>
-              <div class="row wrap">
-                <div style="flex:2 1 220px;"><label>Kontragent</label><input id="arCp"></div>
-                <div style="flex:1 1 160px;"><label>Tarix</label><input id="arDate" type="date" value="${today()}"></div>
-                <div style="flex:1 1 150px;"><label>Məbləğ (₼)</label><input id="arAmt" type="number" step="0.01"></div>
-                <div style="flex:1 1 160px;"><label>Status</label><select id="arStatus"><option>open</option><option>partial</option><option>closed</option></select></div>
-              </div>
-              <label>Qeyd</label><textarea id="arNote"></textarea>
-              <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addAR()">Əlavə et</button></div>
-              <div class="divider"></div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kontragent</th><th class="right">Məbləğ</th><th class="right">Qalıq</th><th>Status</th><th class="right">Əməliyyat</th></tr></thead>
-                <tbody>${arRows}</tbody>
-              </table>
-            </div>
-
-            <div class="card">
-              <div class="section-title">Borclar (AP)</div>
-              <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
-                <button onclick="exportToExcel('ap')">📥 Excel yüklə</button>
-              </div>
-              <div class="row wrap">
-                <div style="flex:2 1 220px;"><label>Kontragent</label><input id="apCp"></div>
-                <div style="flex:1 1 160px;"><label>Tarix</label><input id="apDate" type="date" value="${today()}"></div>
-                <div style="flex:1 1 150px;"><label>Məbləğ (₼)</label><input id="apAmt" type="number" step="0.01"></div>
-                <div style="flex:1 1 160px;"><label>Status</label><select id="apStatus"><option>open</option><option>partial</option><option>closed</option></select></div>
-              </div>
-              <label>Qeyd</label><textarea id="apNote"></textarea>
-              <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addAP()">Əlavə et</button></div>
-              <div class="divider"></div>
-              <table>
-                <thead><tr><th>Tarix</th><th>Kontragent</th><th class="right">Məbləğ</th><th class="right">Qalıq</th><th>Status</th><th class="right">Əməliyyat</th></tr></thead>
-                <tbody>${apRows}</tbody>
-              </table>
-            </div>
-          </div>`;
-      }
+      <div class="card">
+        <div class="section-title">Borclar (AP)</div>
+        <div class="row" style="justify-content:flex-end;margin-bottom:8px;">
+          <button onclick="exportToExcel('ap')">📥 Excel yüklə</button>
+        </div>
+        <div class="row wrap">
+          <div style="flex:2 1 220px;"><label>Kontragent</label><input id="apCp"></div>
+          <div style="flex:1 1 160px;"><label>Tarix</label><input id="apDate" type="date" value="${today()}"></div>
+          <div style="flex:1 1 150px;"><label>Məbləğ (₼)</label><input id="apAmt" type="number" step="0.01"></div>
+          <div style="flex:1 1 160px;"><label>Status</label><select id="apStatus"><option>open</option><option>partial</option><option>closed</option></select></div>
+        </div>
+        <label>Qeyd</label><textarea id="apNote"></textarea>
+        <div class="row" style="justify-content:flex-end;margin-top:8px;"><button class="primary" onclick="addAP()">Əlavə et</button></div>
+        <div class="divider"></div>
+        <table>
+          <thead><tr><th>Tarix</th><th>Kontragent</th><th class="right">Məbləğ</th><th class="right">Qalıq</th><th>Status</th><th class="right">Əməliyyat</th><th>Tarixçə</th></tr></thead>
+          <tbody>${apRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
 
       async function addAR() {
         const counterparty = $("#arCp").value.trim();
