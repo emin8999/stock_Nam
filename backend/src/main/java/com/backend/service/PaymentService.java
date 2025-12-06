@@ -36,8 +36,8 @@ public class PaymentService {
     }
 
        
-    public List<PaymentDTO> getPaymentsByCreditor(String arId) {
-        List<Payment> payments = paymentRepository.findAllByArId(arId);
+    public List<PaymentDTO> getPaymentsByCreditor(String apId) {
+        List<Payment> payments = paymentRepository.findAllByArId(apId);
 
         return payments.stream().map(payment -> {
             PaymentDTO dto = new PaymentDTO();
