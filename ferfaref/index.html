@@ -1750,40 +1750,187 @@ function renderARAP() {
         } catch (e) {}
       }
 
-      async function addARPayPrompt(id) {
-        const e = APP.ar.find((x) => x.id === id);
-        if (!e) return;
-        const amt = prompt("Ödəniş məbləği (₼)");
-        if (amt === null) return;
-        const a = Number(amt);
-        if (!(a > 0)) return alert("Yanlış məbləğ");
+async function addARPayPrompt(id) {
+  const e = APP.ar.find((x) => x.id === id);
+  if (!e) return;
+  
+  const remaining = arRemaining(e);
+  
+  // Modal yaradırıq
+  const overlay = document.createElement("div");
+  overlay.className = "payment-overlay open";
+  overlay.innerHTML = `
+    <div class="payment-modal" role="dialog" aria-modal="true">
+      <h2>Ödəniş əlavə et</h2>
+      <div style="padding:12px 0;">
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;color:#475569;font-size:13px;">Kontragent</label>
+          <input type="text" readonly value="${e.counterparty || ''}" style="width:100%;padding:10px;border:1px solid #e0e7ff;border-radius:8px;background:#f8fafc;color:#1f2937;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;color:#475569;font-size:13px;">Qalıq məbləğ</label>
+          <input type="text" readonly value="${fmtMoney(remaining)}" style="width:100%;padding:10px;border:1px solid #e0e7ff;border-radius:8px;background:#f8fafc;color:#1f2937;font-weight:700;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;color:#475569;font-size:13px;">Ödəniş məbləği (₼) *</label>
+          <input type="number" id="paymentAmount" step="0.01" placeholder="0.00" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1f2937;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;color:#475569;font-size:13px;">Qeyd</label>
+          <textarea id="paymentNote" placeholder="Ödəniş haqqında qeyd..." style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1f2937;min-height:80px;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="ghost" type="button" id="cancelBtn" style="padding:0.55rem 1.4rem;border-radius:999px;border:1px solid #cbd5e1;">Ləğv et</button>
+        <button class="close-btn" type="button" id="confirmBtn">Təsdiq et</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 
-        try {
-          await apiPOST(`/api/ar/${id}/payments`, {
-            date: today(),
-            amountAzn: a,
-          });
-          await fetchARAP();
-        } catch (e) {}
-      }
+  const closeModal = () => {
+    overlay.classList.remove("open");
+    overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
+  };
 
-      async function addAPPayPrompt(id) {
-        const e = APP.ap.find((x) => x.id === id);
-        if (!e) return;
-        const amt = prompt("Ödəniş məbləği (₼)");
-        if (amt === null) return;
-        const a = Number(amt);
-        if (!(a > 0)) return alert("Yanlış məbləğ");
+  // Ləğv et düyməsi
+  overlay.querySelector("#cancelBtn").addEventListener("click", closeModal);
+  
+  // Overlay-ə klik
+  overlay.addEventListener("click", (evt) => {
+    if (evt.target === overlay) closeModal();
+  });
 
-        try {
-          await apiPOST(`/api/ap/${id}/payments`, {
-            date: today(),
-            amountAzn: a,
-          });
-          await fetchARAP();
-        } catch (e) {}
-      }
+  // ESC düyməsi
+  const escListener = (evt) => {
+    if (evt.key === "Escape") {
+      closeModal();
+      window.removeEventListener("keydown", escListener);
+    }
+  };
+  window.addEventListener("keydown", escListener);
 
+  // Təsdiq et düyməsi
+  overlay.querySelector("#confirmBtn").addEventListener("click", async () => {
+    const amount = Number(document.getElementById("paymentAmount").value);
+    const note = document.getElementById("paymentNote").value.trim();
+    
+    if (!(amount > 0)) {
+      alert("Düzgün məbləğ daxil edin");
+      return;
+    }
+    
+    if (amount > remaining) {
+      const confirm = window.confirm(`Ödəniş məbləği (${fmtMoney(amount)}) qalıq məbləğdən (${fmtMoney(remaining)}) böyükdür. Davam edək?`);
+      if (!confirm) return;
+    }
+
+    try {
+      await apiPOST(`/api/ar/${id}/payments`, {
+        date: today(),
+        amountAzn: amount,
+        note: note
+      });
+      closeModal();
+      await fetchARAP();
+      alert("✅ Ödəniş uğurla əlavə edildi");
+    } catch (err) {
+      console.error(err);
+      alert("Xəta baş verdi");
+    }
+  });
+}
+
+async function addAPPayPrompt(id) {
+  const e = APP.ap.find((x) => x.id === id);
+  if (!e) return;
+  
+  const remaining = apRemaining(e);
+  
+  
+  const overlay = document.createElement("div");
+  overlay.className = "payment-overlay open";
+  overlay.innerHTML = `
+    <div class="payment-modal" role="dialog" aria-modal="true">
+      <h2>Ödəniş əlavə et</h2>
+      <div style="padding:12px 0;">
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;color:#475569;font-size:13px;">Kontragent</label>
+          <input type="text" readonly value="${e.counterparty || ''}" style="width:100%;padding:10px;border:1px solid #e0e7ff;border-radius:8px;background:#f8fafc;color:#1f2937;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;color:#475569;font-size:13px;">Qalıq məbləğ</label>
+          <input type="text" readonly value="${fmtMoney(remaining)}" style="width:100%;padding:10px;border:1px solid #e0e7ff;border-radius:8px;background:#f8fafc;color:#1f2937;font-weight:700;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;color:#475569;font-size:13px;">Ödəniş məbləği (₼) *</label>
+          <input type="number" id="paymentAmount" step="0.01" placeholder="0.00" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1f2937;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;color:#475569;font-size:13px;">Qeyd</label>
+          <textarea id="paymentNote" placeholder="Ödəniş haqqında qeyd..." style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1f2937;min-height:80px;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="ghost" type="button" id="cancelBtn" style="padding:0.55rem 1.4rem;border-radius:999px;border:1px solid #cbd5e1;">Ləğv et</button>
+        <button class="close-btn" type="button" id="confirmBtn">Təsdiq et</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const closeModal = () => {
+    overlay.classList.remove("open");
+    overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
+  };
+
+ 
+  overlay.querySelector("#cancelBtn").addEventListener("click", closeModal);
+  
+
+  overlay.addEventListener("click", (evt) => {
+    if (evt.target === overlay) closeModal();
+  });
+
+ 
+  const escListener = (evt) => {
+    if (evt.key === "Escape") {
+      closeModal();
+      window.removeEventListener("keydown", escListener);
+    }
+  };
+  window.addEventListener("keydown", escListener);
+
+ 
+  overlay.querySelector("#confirmBtn").addEventListener("click", async () => {
+    const amount = Number(document.getElementById("paymentAmount").value);
+    const note = document.getElementById("paymentNote").value.trim();
+    
+    if (!(amount > 0)) {
+      alert("Düzgün məbləğ daxil edin");
+      return;
+    }
+    
+    if (amount > remaining) {
+      const confirm = window.confirm(`Ödəniş məbləği (${fmtMoney(amount)}) qalıq məbləğdən (${fmtMoney(remaining)}) böyükdür. Davam edək?`);
+      if (!confirm) return;
+    }
+
+    try {
+      await apiPOST(`/api/ap/${id}/payments`, {
+        date: today(),
+        amountAzn: amount,
+        note: note
+      });
+      closeModal();
+      await fetchARAP();
+      alert("✅ Ödəniş uğurla əlavə edildi");
+    } catch (err) {
+      console.error(err);
+      alert("Xəta baş verdi");
+    }
+  });
+}
       // --- REPORTS ---
       function renderReports() {
         const from = today().slice(0, 7) + "-01";
